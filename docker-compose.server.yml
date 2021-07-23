@@ -44,6 +44,8 @@ services:
     container_name: binance-mongo
     image: mongo:3.2.20-jessie
     restart: unless-stopped
+    ports:
+      - 50811:8081
     networks:
       - internal
     volumes:
