@@ -45,7 +45,7 @@ services:
     image: mongo:3.2.20-jessie
     restart: unless-stopped
     ports:
-      - 50811:8081
+      - 8081:27017
     networks:
       - internal
     volumes:
