@@ -139,7 +139,8 @@ const sendMessage = async (symbol = null, lastOrder = null, action) => {
       break;
   }
 
-  message = '*' + (process.env.BOT_NAME || 'JohnDoe') + '*: ' + message
+  let nickName = process.env.BOT_NAME || 'JohnDoe'
+  message = `*${nickName}*: ` + message
 
   if (globalConfiguration.botOptions.slack === true) {
     slack.notifySlack(message);
