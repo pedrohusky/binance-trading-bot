@@ -93,7 +93,7 @@ const predictCoinValue = async symbol => {
   if (cachedPrediction !== []) {
     prediction = cachedPrediction;
   }
-
+  messenger.errorMessage(prediction.toString());
   if (
     (new Date() - new Date(prediction.date)) / 1000 > 180 ||
     _.isEmpty(prediction.predictedValues)
