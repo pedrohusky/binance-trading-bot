@@ -28,6 +28,98 @@ const saveGlobalConfiguration = async (logger, configuration) => {
 };
 
 /**
+ * Reset past trades
+ *
+ * @param {*} logger
+ */
+const erasePastTrades = async logger => {
+  try {
+    logger.info('Erasing past trade');
+    await cache.del(`past-trades`);
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+/**
+ * Delete all symbols from mongoDB.
+ *
+ * @param {*} logger
+ */
+const deleteAllSymbolsFromMongo = async (logger, symbols) => {
+  // Delete cache values from all symbols to update it all again.
+  await cache.del('trailing-trade-common');
+  await cache.del('trailing-trade-symbols');
+
+  // Delete all last buy orders.
+  symbols.forEach(async symbol => {
+    await cache.del(`${symbol}-last-buy-order`);
+  });
+
+  // Delete all from mongo.
+  await mongo.deleteAll(logger, 'trailing-trade-symbols');
+
+  return true;
+};
+
+/**
+ * Delete all cache.
+ *
+ * @param {*} logger
+ */
+const deleteAllCache = async symbols => {
+  // Delete cache values from all symbols to update it all again.
+  await cache.del('trailing-trade-common');
+  await cache.del('trailing-trade-symbols');
+
+  // Delete all last buy orders.
+  symbols.forEach(async symbol => {
+    await cache.del(`${symbol}-last-buy-order`);
+  });
+
+  return true;
+};
+
+/**
+ * Reset to factory settings
+ *
+ * @param {*} logger
+ */
+const resetToFactorySettings = async (logger, symbols) => {
+  // Retrieve initial config from config.
+  const orgConfigValue = config.get('jobs.trailingTrade');
+  const originalSymbols = ['BTCUSDT', 'ETHUSDT', 'ETHBTC', 'XRPBTC'];
+  orgConfigValue.symbols = Object.values(originalSymbols);
+
+  // Now delete it all from mongo any info about symbols.
+  await deleteAllSymbolsFromMongo(logger, symbols);
+
+  // Then save it.
+  await saveGlobalConfiguration(logger, orgConfigValue);
+  return true;
+};
+
+/**
+ * Reset to factory settings but keep saved symbols
+ *
+ * @param {*} logger
+ */
+const resetToFactorySettingsWithSymbols = async (logger, symbols) => {
+  const orgConfigValue = config.get('jobs.trailingTrade');
+
+  // Set the original configuration symbol as your actual monitored symbols.
+  orgConfigValue.symbols = Object.values(symbols);
+
+  // Now delete it all from mongo any info about symbols.
+  await deleteAllSymbolsFromMongo(logger, symbols);
+
+  // Then save it.
+  await saveGlobalConfiguration(logger, orgConfigValue);
+  return true;
+};
+
+/**
  * Get global configuration from mongodb
  *
  * @param {*} logger
@@ -154,7 +246,7 @@ const getMaxPurchaseAmount = async (
 
   let newBuyMaxPurchaseAmount = -1;
 
-  // If old max purchase amount is -1, then should calculate last buy remove threshold based on the notional amount.
+  // If old max purchase amount is -1, then should calculate maximum purchase amount based on the notional amount.
   const cachedSymbolInfo =
     JSON.parse(
       await cache.hget('trailing-trade-symbols', `${symbol}-symbol-info`)
@@ -223,7 +315,7 @@ const getLastBuyPriceRemoveThreshold = async (
   let newBuyLastBuyPriceRemoveThreshold = -1;
 
   // If old last buy price remove threshold is -1,
-  // then should calculate last buy price remove threshold based on the notional amount.
+  // then should calculate last buy remove threshold based on the notional amount.
   const cachedSymbolInfo =
     JSON.parse(
       await cache.hget('trailing-trade-symbols', `${symbol}-symbol-info`)
@@ -262,6 +354,75 @@ const getLastBuyPriceRemoveThreshold = async (
   }
 
   return newBuyLastBuyPriceRemoveThreshold;
+};
+
+const getMinPurchaseAmount = async (
+  logger,
+  symbol,
+  globalConfiguration,
+  symbolConfiguration
+) => {
+  const symbolMinimumPurchaseAmount = _.get(
+    symbolConfiguration,
+    'buy.minPurchaseAmount',
+    -1
+  );
+
+  if (symbolMinimumPurchaseAmount !== -1) {
+    logger.info(
+      { symbolMinimumPurchaseAmount },
+      'Minimum purchase amount is found from symbol configuration.'
+    );
+    return symbolMinimumPurchaseAmount;
+  }
+
+  logger.info(
+    { symbolMinimumPurchaseAmount },
+    'Last Buy Price Remove Threshold is set as -1. Need to calculate and override it'
+  );
+
+  let newMinimumPurchaseAmount = -1;
+
+  // If old last buy price remove threshold is -1,
+  // then should calculate last buy remove threshold based on the notional amount.
+  const cachedSymbolInfo =
+    JSON.parse(
+      await cache.hget('trailing-trade-symbols', `${symbol}-symbol-info`)
+    ) || {};
+
+  if (_.isEmpty(cachedSymbolInfo) === false) {
+    const {
+      quoteAsset,
+      filterMinNotional: { minNotional }
+    } = cachedSymbolInfo;
+
+    newMinimumPurchaseAmount = _.get(
+      globalConfiguration,
+      `buy.minPurchaseAmounts.${quoteAsset}`,
+      -1
+    );
+
+    logger.info(
+      { quoteAsset, newMinimumPurchaseAmount },
+      'Retrieved minimum purchase amount from global configuration'
+    );
+
+    if (newMinimumPurchaseAmount === -1) {
+      newMinimumPurchaseAmount = parseFloat(minNotional);
+
+      logger.info(
+        { newMinimumPurchaseAmount, minNotional },
+        'Could not get minimum purchase amount from global configuration. Using minimum notional from symbol info'
+      );
+    }
+  } else {
+    logger.info(
+      { cachedSymbolInfo },
+      'Could not find symbol info, wait to be cached.'
+    );
+  }
+
+  return newMinimumPurchaseAmount;
 };
 /**
  * Get global/symbol configuration
@@ -302,8 +463,20 @@ const getConfiguration = async (logger, symbol = null) => {
       )
     );
 
+    _.set(
+      mergedConfigValue,
+      'buy.minPurchaseAmount',
+      await getMinPurchaseAmount(
+        logger,
+        symbol,
+        globalConfigValue,
+        symbolConfigValue
+      )
+    );
+
     // For symbol configuration, remove maxPurchaseAmounts
     _.unset(mergedConfigValue, 'buy.maxPurchaseAmounts');
+    _.unset(mergedConfigValue, 'buy.minPurchaseAmounts');
     _.unset(mergedConfigValue, 'buy.lastBuyPriceRemoveThresholds');
   }
 
@@ -318,5 +491,9 @@ module.exports = {
   saveSymbolConfiguration,
   deleteAllSymbolConfiguration,
   deleteSymbolConfiguration,
-  getConfiguration
+  getConfiguration,
+  resetToFactorySettings,
+  resetToFactorySettingsWithSymbols,
+  erasePastTrades,
+  deleteAllCache
 };

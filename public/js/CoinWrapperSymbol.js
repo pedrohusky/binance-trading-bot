@@ -25,7 +25,8 @@ class CoinWrapperSymbol extends React.Component {
       baseAssetBalance,
       quoteAssetBalance,
       configuration: globalConfiguration,
-      sendWebSocket
+      sendWebSocket,
+      jsonStrings
     } = this.props;
 
     return (
@@ -38,8 +39,22 @@ class CoinWrapperSymbol extends React.Component {
             className='coin-symbol'>
             {symbol}
           </a>
+          {_.isEmpty(symbolInfo.buy.trend) == false ? (
+            [symbolInfo.buy.trend.signedTrendDiff == 1 ? (
+              <i class="gg-chevron-double-up"></i>
+            ) : (
+              [symbolInfo.buy.trend.signedTrendDiff == -1 ? (
+                <i class="gg-chevron-double-down"></i>
+              ) : (
+                ''
+              )]
+            )]
+          ) : (
+            ''
+          )}
         </div>
         <div className='coin-info-column coin-info-column-icon'>
+
           <CoinWrapperManualTrade
             symbol={symbol}
             lastCandle={lastCandle}
@@ -53,6 +68,7 @@ class CoinWrapperSymbol extends React.Component {
             baseAssetBalance={baseAssetBalance}
             quoteAssetBalance={quoteAssetBalance}
             sendWebSocket={sendWebSocket}
+            jsonStrings={jsonStrings}
           />
           {this.isMonitoring() && (
             <Spinner
@@ -65,10 +81,12 @@ class CoinWrapperSymbol extends React.Component {
             symbolInfo={symbolInfo}
             globalConfiguration={globalConfiguration}
             sendWebSocket={sendWebSocket}
+            jsonStrings={jsonStrings}
           />
           <SymbolDeleteIcon
             symbolInfo={symbolInfo}
             sendWebSocket={sendWebSocket}
+            jsonStrings={jsonStrings}
           />
         </div>
       </div>

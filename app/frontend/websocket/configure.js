@@ -5,7 +5,10 @@ const {
   handleLatest,
   handleSettingUpdate,
   handleSymbolUpdateLastBuyPrice,
+  handleSymbolBackTest,
   handleSymbolDelete,
+  handlePastTradesErase,
+  handleResetFactorySettings,
   handleSymbolSettingUpdate,
   handleSymbolSettingDelete,
   handleSymbolEnableAction,
@@ -13,7 +16,9 @@ const {
   handleManualTradeAllSymbols,
   handleCancelOrder,
   handleDustTransferGet,
-  handleDustTransferExecute
+  handleDustTransferExecute,
+  handlePassword,
+  handleDisconnect
 } = require('./handlers');
 
 const handleWarning = (logger, ws, message) => {
@@ -54,14 +59,29 @@ const configureWebSocket = async (server, funcLogger) => {
         case 'latest':
           await handleLatest(commandLogger, ws, payload);
           break;
+        case 'disconnect':
+          await handleDisconnect(commandLogger, ws, payload);
+          break;
         case 'setting-update':
           await handleSettingUpdate(commandLogger, ws, payload);
           break;
         case 'symbol-update-last-buy-price':
           await handleSymbolUpdateLastBuyPrice(commandLogger, ws, payload);
           break;
+        case 'symbol-backtest':
+          await handleSymbolBackTest(commandLogger, ws, payload);
+          break;
         case 'symbol-delete':
           await handleSymbolDelete(commandLogger, ws, payload);
+          break;
+        case 'past-trades-erase':
+          await handlePastTradesErase(commandLogger, ws, payload);
+          break;
+        case 'reset-factory-settings':
+          await handleResetFactorySettings(commandLogger, ws, payload);
+          break;
+        case 'verify-password':
+          await handlePassword(commandLogger, ws, payload);
           break;
         case 'symbol-setting-update':
           await handleSymbolSettingUpdate(commandLogger, ws, payload);
@@ -88,7 +108,11 @@ const configureWebSocket = async (server, funcLogger) => {
           await handleDustTransferExecute(commandLogger, ws, payload);
           break;
         default:
-          handleWarning(logger, ws, 'Command is not recognised.');
+          handleWarning(
+            logger,
+            ws,
+            `Command '${payload.command}' is not recognised.`
+          );
       }
     });
 

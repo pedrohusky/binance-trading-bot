@@ -3,8 +3,13 @@
 /* eslint-disable no-undef */
 class Header extends React.Component {
   render() {
-    const { configuration, publicURL, sendWebSocket, exchangeSymbols } =
-      this.props;
+    const {
+      configuration,
+      publicURL,
+      sendWebSocket,
+      exchangeSymbols,
+      jsonStrings
+    } = this.props;
 
     return (
       <div className='app-header'>
@@ -19,6 +24,7 @@ class Header extends React.Component {
               Binance Auto Trading Bot
             </h1>
           </div>
+
           <div className='header-column header-column-icon'>
             <div className='header-column-icon-wrapper github-wrapper'>
               <a
@@ -29,6 +35,11 @@ class Header extends React.Component {
                 <i className='fa fa-github'></i>
               </a>
             </div>
+
+            <ThemeChanger
+              configuration={configuration}
+              sendWebSocket={sendWebSocket}
+            />
 
             {_.isEmpty(publicURL) === false ? (
               <div className='header-column-icon-wrapper public-url-wrapper'>
@@ -44,15 +55,19 @@ class Header extends React.Component {
             ) : (
               ''
             )}
+
             {_.isEmpty(configuration) === false ? (
               <SettingIcon
                 exchangeSymbols={exchangeSymbols}
                 configuration={configuration}
                 sendWebSocket={sendWebSocket}
+                jsonStrings={jsonStrings}
               />
             ) : (
               ''
             )}
+
+            <LogOut sendWebSocket={sendWebSocket} />
           </div>
         </div>
       </div>

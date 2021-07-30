@@ -1,11 +1,11 @@
-const moment = require('moment');
 const config = require('config');
 
 const {
   lockSymbol,
   isSymbolLocked,
   unlockSymbol,
-  getAPILimit
+  getAPILimit,
+  isExceedAPILimit
 } = require('./trailingTradeHelper/common');
 
 const {
@@ -19,13 +19,16 @@ const {
   executeDustTransfer,
   saveDataToCache
 } = require('./trailingTradeIndicator/steps');
-const { slack } = require('../helpers');
+const {
+  updateTelegramBotTrailingTradeIndicatorData,
+  manageError
+} = require('../helpers/telegram');
 
 const execute = async logger => {
   // Retrieve feature toggles
   const featureToggle = config.get('featureToggle');
 
-  // Define sekeleton of data structure
+  // Define skeleton of data structure
   let data = {
     action: 'not-determined',
     featureToggle,
@@ -38,6 +41,10 @@ const execute = async logger => {
     overrideParams: {},
     apiLimit: { start: getAPILimit(logger), end: null }
   };
+
+  if (isExceedAPILimit(logger)) {
+    return data;
+  }
 
   try {
     data = await getGlobalConfiguration(logger, data);
@@ -113,6 +120,8 @@ const execute = async logger => {
       '⏹ TrailingTradeIndicator: Finish process (Debug)...'
     );
 
+    await updateTelegramBotTrailingTradeIndicatorData(data);
+
     logger.info({ symbol, data }, 'TrailingTradeIndicator: Finish process...');
   } catch (err) {
     logger.error(
@@ -124,17 +133,13 @@ const execute = async logger => {
       err.code === -1021 || // Timestamp for this request is outside of the recvWindow
       err.code === 'ECONNRESET' ||
       err.code === 'ECONNREFUSED' ||
+      err.code === 'ETIMEDOUT' ||
       err.message.includes('redlock') // For the redlock fail
     ) {
       // Let's silent for internal server error or assumed temporary errors
     } else {
-      slack.sendMessage(
-        `Execution failed (${moment().format('HH:mm:ss.SSS')})\n` +
-          `Job: Trailing Trade Indicator\n` +
-          `Code: ${err.code}\n` +
-          `Message:\`\`\`${err.message}\`\`\`\n` +
-          `Stack:\`\`\`${err.stack}\`\`\`\n` +
-          `- Current API Usage: ${getAPILimit(logger)}`
+      manageError(
+        `Code: ${err.code}\n Error message: ${err.message}\n Job: Trailing Trade Indicator`
       );
     }
   }

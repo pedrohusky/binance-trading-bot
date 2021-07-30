@@ -85,7 +85,7 @@ class ManualTradeIcon extends React.Component {
 
           if (
             buySymbols[quoteAssetBalance.asset].baseAssets[
-              baseAssetBalance.asset
+            baseAssetBalance.asset
             ] === undefined
           ) {
             buySymbols[quoteAssetBalance.asset].baseAssets[
@@ -113,7 +113,7 @@ class ManualTradeIcon extends React.Component {
 
           if (
             sellSymbols[quoteAssetBalance.asset].baseAssets[
-              baseAssetBalance.asset
+            baseAssetBalance.asset
             ] === undefined
           ) {
             sellSymbols[quoteAssetBalance.asset].baseAssets[
@@ -344,10 +344,10 @@ class ManualTradeIcon extends React.Component {
       target.type === 'button'
         ? target.getAttribute('data-state-value')
         : target.type === 'checkbox'
-        ? target.checked
-        : target.type === 'number'
-        ? +target.value
-        : target.value;
+          ? target.checked
+          : target.type === 'number'
+            ? +target.value
+            : target.value;
     const stateKey = target.getAttribute('data-state-key');
 
     const { orders } = this.state;
@@ -372,6 +372,12 @@ class ManualTradeIcon extends React.Component {
 
   render() {
     const { showModal, orders } = this.state;
+    const { jsonStrings } = this.props;
+
+    if (_.isEmpty(jsonStrings)) {
+      return '';
+    }
+    const { common_strings, manual_trade } = jsonStrings;
 
     return (
       <div className='coin-info-manual-trade-wrapper'>
@@ -380,7 +386,7 @@ class ManualTradeIcon extends React.Component {
             type='button'
             className='btn btn-sm btn-manual-trade mr-1'
             onClick={() => this.handleModalShow()}>
-            <i className='fa fa-shopping-bag'></i> Trade all
+            <i className='fa fa-shopping-bag'></i> {manual_trade.trade_all}
           </button>
         </div>
         <Modal
@@ -389,30 +395,22 @@ class ManualTradeIcon extends React.Component {
           backdrop='static'
           size='xl'>
           <Modal.Header closeButton className='pt-1 pb-1'>
-            <Modal.Title>Manual trade for all symbols</Modal.Title>
+            <Modal.Title>{manual_trade.manual_trade_for_all}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <p className='d-block text-muted mb-2'>
-              In this modal, you can trade all symbols manually. To simplify the
-              order process, it only supports Market - Total buy order, Market -
-              Amount sell order.
+              {manual_trade._description[1]}
               <br />
               <br />
-              If you enter 0 on the symbol, the bot won't place an order for the
-              symbol. If you already have the last buy price, then the bot will
-              calculate average cost and re-calculate the last buy price.
+              {manual_trade._description[2]}
               <br />
               <br />
-              To make sure the last buy price is recorded only if the order is
-              successfully executed, the bot will monitor the order after
-              placing the buy order. This action may increase the use of API
-              weight.
+              {manual_trade._description[3]}
               {orders.side === 'sell' ? (
                 <React.Fragment>
                   <br />
                   <br />
-                  If you click the button to sell 100% of the remaining balance,
-                  it will automatically caluclate 0.1% commission.
+                  {manual_trade._description[4]}
                 </React.Fragment>
               ) : (
                 ''
@@ -426,7 +424,7 @@ class ManualTradeIcon extends React.Component {
                   data-state-key='side'
                   data-state-value='buy'
                   onClick={e => this.handleInputChange(e)}>
-                  Buy
+                  {common_strings._buy}
                 </Button>
                 <Button
                   variant={orders.side === 'sell' ? 'primary' : 'secondary'}
@@ -434,7 +432,7 @@ class ManualTradeIcon extends React.Component {
                   data-state-key='side'
                   data-state-value='sell'
                   onClick={e => this.handleInputChange(e)}>
-                  Sell
+                  {common_strings._sell}
                 </Button>
               </ButtonGroup>
             </div>
@@ -447,7 +445,7 @@ class ManualTradeIcon extends React.Component {
                         variant='primary'
                         className='w-100'
                         disabled={true}>
-                        Market
+                        {common_strings._market}
                       </Button>
                     </ButtonGroup>
                   </div>
@@ -455,31 +453,29 @@ class ManualTradeIcon extends React.Component {
                   <div className='manual-trade-row manual-trade-price-wrapper mt-2'>
                     <Form.Group controlId='field-buy-price' className='mb-2'>
                       <Form.Label htmlFor='field-buy-price-input' srOnly>
-                        Price
+                        {common_strings._price}
                       </Form.Label>
                       <InputGroup size='sm'>
                         <InputGroup.Prepend>
-                          <InputGroup.Text>Price</InputGroup.Text>
+                          <InputGroup.Text>{common_strings._price}</InputGroup.Text>
                         </InputGroup.Prepend>
 
                         <FormControl
                           id='field-buy-price-input'
                           type='text'
                           className='text-right'
-                          value='Market'
-                          disabled={true}
+                          value={common_strings._market}
                         />
                       </InputGroup>
                     </Form.Group>
                   </div>
-
                   <div className='manual-trade-row manual-trade-type-wrapper mt-2'>
                     <ButtonGroup size='sm' className='d-block'>
                       <Button
                         variant='primary'
                         className='w-100'
                         disabled={true}>
-                        Total
+                        {common_strings._total}
                       </Button>
                     </ButtonGroup>
                   </div>
@@ -507,7 +503,7 @@ class ManualTradeIcon extends React.Component {
                             </div>
                             <div className='manual-trade-row d-flex flex-row justify-content-between mt-1 mb-1'>
                               <div className='manual-trade-label'>
-                                Current Balance
+                                {common_strings.current_balance}
                               </div>
                               <span className='manual-trade-quote-asset'>
                                 {parseFloat(quoteAssetBalance.free).toFixed(
@@ -674,7 +670,7 @@ class ManualTradeIcon extends React.Component {
                             </div>
                             <div className='manual-trade-row d-flex flex-row justify-content-between mt-1 mb-1'>
                               <div className='manual-trade-label'>
-                                Remaining Balance
+                                {common_strings.remaining_balance}
                               </div>
                               <span className='manual-trade-quote-asset'>
                                 {parseFloat(remainingQuoteAssetBalance).toFixed(
@@ -697,7 +693,7 @@ class ManualTradeIcon extends React.Component {
                           this.handleInputChange(e);
                           this.handleFormSubmit(e);
                         }}>
-                        Buy
+                        {common_strings._buy}
                       </button>
                     </div>
                   </div>
@@ -714,7 +710,7 @@ class ManualTradeIcon extends React.Component {
                         variant='primary'
                         className='w-100'
                         disabled={true}>
-                        Market
+                        {common_strings._market}
                       </Button>
                     </ButtonGroup>
                   </div>
@@ -722,18 +718,17 @@ class ManualTradeIcon extends React.Component {
                   <div className='manual-trade-row manual-trade-price-wrapper mt-2'>
                     <Form.Group controlId='field-sell-price' className='mb-2'>
                       <Form.Label htmlFor='field-sell-price-input' srOnly>
-                        Price
+                        {common_strings._price}
                       </Form.Label>
                       <InputGroup size='sm'>
                         <InputGroup.Prepend>
-                          <InputGroup.Text>Price</InputGroup.Text>
+                          <InputGroup.Text>{common_strings._price}</InputGroup.Text>
                         </InputGroup.Prepend>
                         <FormControl
                           id='field-sell-price-input'
                           type='text'
                           className='text-right'
-                          value='Market'
-                          disabled={true}
+                          value={common_strings._market}
                         />
                       </InputGroup>
                     </Form.Group>
@@ -745,7 +740,7 @@ class ManualTradeIcon extends React.Component {
                         variant='primary'
                         className='w-100'
                         disabled={true}>
-                        Amount
+                        {common_strings._quantity}
                       </Button>
                     </ButtonGroup>
                   </div>
@@ -786,7 +781,7 @@ class ManualTradeIcon extends React.Component {
                                     <div className='manual-trade-row manual-trade-row-base-asset'>
                                       <div className='manual-trade-row d-flex flex-row justify-content-between mt-1 mb-1'>
                                         <div className='manual-trade-label'>
-                                          Remaining Balance
+                                          {common_strings.remaining_balance}
                                         </div>
                                         <span className='manual-trade-quote-asset'>
                                           {parseFloat(remainingBalance).toFixed(
@@ -950,7 +945,7 @@ class ManualTradeIcon extends React.Component {
                         this.handleInputChange(e);
                         this.handleFormSubmit(e);
                       }}>
-                      Sell
+                      {common_strings._sell}
                     </button>
                   </div>
                 </div>

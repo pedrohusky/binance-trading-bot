@@ -27,6 +27,13 @@
     "channel": "",
     "username": ""
   },
+  "telegram": {
+    "enabled": false,
+    "chatid": "",
+    "token": ""
+  },
+  "language": "en",
+  "password": "",
   "localTunnel": {
     "enabled": true,
     "subdomain": "default"
@@ -41,22 +48,30 @@
       "cronTime": "0 0 9 * * *"
     },
     "trailingTrade": {
+      "language": "en",
       "enabled": true,
       "cronTime": "* * * * * *",
-      "symbols": ["BTCUSDT", "ETHUSDT", "ETHBTC", "XRPBTC"],
+      "symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "ETHBTC",
+        "XRPBTC"
+      ],
       "candles": {
         "interval": "1h",
         "limit": 100
       },
-      "buy": {
-        "enabled": true,
-        "maxPurchaseAmount": -1,
-        "maxPurchaseAmounts": {},
-        "lastBuyPriceRemoveThreshold": -1,
-        "lastBuyPriceRemoveThresholds": {},
-        "triggerPercentage": 1.0,
-        "stopPercentage": 1.02,
-        "limitPercentage": 1.021,
+      "strategyOptions": {
+        "tradeOptions": {
+          "manyBuys": false,
+          "differenceToBuy": 5
+        },
+        "huskyOptions": {
+          "buySignal": true,
+          "sellSignal": false,
+          "positive": 1.01,
+          "negative": 1.03
+        },
         "athRestriction": {
           "enabled": true,
           "candles": {
@@ -66,9 +81,39 @@
           "restrictionPercentage": 0.9
         }
       },
+      "botOptions": {
+        "language": "en",
+        "telegram": false,
+        "slack": false,
+        "calcFees": true,
+        "sortType": 0,
+        "login": {
+          "passwordActivated": false,
+          "logged": false,
+          "elapsedTime": 0,
+          "loginWindowMinutes": 60
+        },
+        "theme": "theme-dark"
+      },
+      "buy": {
+        "enabled": true,
+        "predictValue": false,
+        "lastBuyPriceRemoveThreshold": -1,
+        "lastBuyPriceRemoveThresholds": {},
+        "maxPurchaseAmount": -1,
+        "maxPurchaseAmounts": {},
+        "minPurchaseAmount": -1,
+        "minPurchaseAmounts": {},
+        "triggerPercentage": 1.0,
+        "stopPercentage": 1.02,
+        "limitPercentage": 1.021
+      },
       "sell": {
         "enabled": true,
+        "trendDownMarketSell": true,
+        "stakeCoinEnabled": true,
         "triggerPercentage": 1.06,
+        "hardPercentage": 1.1,
         "stopPercentage": 0.98,
         "limitPercentage": 0.979,
         "stopLoss": {
@@ -78,6 +123,7 @@
           "orderType": "market"
         }
       },
+      "pastTrades": {},
       "system": {
         "temporaryDisableActionAfterConfirmingOrder": 20,
         "checkManualBuyOrderPeriod": 5,

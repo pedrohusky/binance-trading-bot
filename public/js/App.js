@@ -1,6 +1,8 @@
 /* eslint-disable react/jsx-no-undef */
 /* eslint-disable no-undef */
 
+let languageReady = '';
+let languageData = {};
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -17,11 +19,17 @@ class App extends React.Component {
       symbols: [],
       accountInfo: {},
       publicURL: '',
-      dustTransfer: {}
+      dustTransfer: {},
+      passwordActivated: false,
+      searchKeyword: '',
+      sortType: 'default',
+      pastTrades: {}
     };
     this.requestLatest = this.requestLatest.bind(this);
     this.connectWebSocket = this.connectWebSocket.bind(this);
     this.sendWebSocket = this.sendWebSocket.bind(this);
+    this.searchKeyword = this.searchKeyword.bind(this);
+    this.sortSymbols = this.sortSymbols.bind(this);
 
     this.toast = this.toast.bind(this);
 
@@ -67,6 +75,18 @@ class App extends React.Component {
     });
   }
 
+  searchKeyword(searchKeyword) {
+    this.setState({
+      searchKeyword
+    });
+  }
+
+  sortSymbols(sortType) {
+    this.setState({
+      sortType
+    });
+  }
+
   connectWebSocket() {
     const instance = new WebSocket(config.webSocketUrl);
 
@@ -104,33 +124,59 @@ class App extends React.Component {
           return;
         }
 
+        let symbols = response.stats.symbols;
+        switch (this.state.sortType) {
+          case 'name':
+            symbols = _.sortBy(symbols, 'symbol');
+            break;
+
+          case 'buy':
+            symbols = _.sortBy(symbols, 'buy.difference');
+            break;
+
+          case 'sell':
+            symbols = _.sortBy(symbols, 'sell.difference');
+            break;
+
+          case 'profit':
+            symbols = _.sortBy(symbols, 'sell.currentProfitPercentage');
+            break;
+
+          default:
+            symbols = _.sortBy(response.stats.symbols, s => {
+              if (s.buy.openOrders.length > 0) {
+                const openOrder = s.buy.openOrders[0];
+                if (openOrder.differenceToCancel) {
+                  return (openOrder.differenceToCancel + 3000) * -10;
+                }
+              }
+              if (s.sell.openOrders.length > 0) {
+                const openOrder = s.sell.openOrders[0];
+                if (openOrder.differenceToCancel) {
+                  return (openOrder.differenceToCancel + 2000) * -10;
+                }
+              }
+              if (s.sell.difference) {
+                return (s.sell.difference + 1000) * -10;
+              }
+              return s.buy.difference;
+            });
+            break;
+        }
+
         // Set states
         self.setState({
-          symbols: _.sortBy(response.stats.symbols, s => {
-            if (s.buy.openOrders.length > 0) {
-              const openOrder = s.buy.openOrders[0];
-              if (openOrder.differenceToCancel) {
-                return (openOrder.differenceToCancel + 3000) * -10;
-              }
-            }
-            if (s.sell.openOrders.length > 0) {
-              const openOrder = s.sell.openOrders[0];
-              if (openOrder.differenceToCancel) {
-                return (openOrder.differenceToCancel + 2000) * -10;
-              }
-            }
-            if (s.sell.difference) {
-              return (s.sell.difference + 1000) * -10;
-            }
-            return s.buy.difference;
-          }),
+          symbols,
           packageVersion: response.common.version,
           gitHash: response.common.gitHash,
           exchangeSymbols: response.common.exchangeSymbols,
           configuration: response.common.configuration,
           accountInfo: response.common.accountInfo,
           publicURL: response.common.publicURL,
-          apiInfo: response.common.apiInfo
+          apiInfo: response.common.apiInfo,
+          passwordActivated: response.common.passwordActivated,
+          login: response.common.login,
+          pastTrades: response.common.pastTrades
         });
       }
 
@@ -196,60 +242,132 @@ class App extends React.Component {
       accountInfo,
       publicURL,
       apiInfo,
-      dustTransfer
+      dustTransfer,
+      login,
+      passwordActivated,
+      searchKeyword,
+      pastTrades
     } = this.state;
 
-    const coinWrappers = symbols.map((symbol, index) => {
-      return (
-        <CoinWrapper
-          extraClassName={
-            index % 2 === 0 ? 'coin-wrapper-even' : 'coin-wrapper-odd'
-          }
-          key={'coin-wrapper-' + symbol.symbol}
-          symbolInfo={symbol}
-          configuration={configuration}
-          sendWebSocket={this.sendWebSocket}
-        />
-      );
-    });
+    if (configuration.botOptions != undefined) {
+      if (languageReady != configuration.botOptions.language) {
+        languageReady = configuration.botOptions.language;
 
-    return (
-      <div className='app'>
-        <Header
-          configuration={configuration}
-          publicURL={publicURL}
-          exchangeSymbols={exchangeSymbols}
-          sendWebSocket={this.sendWebSocket}
-        />
-        {_.isEmpty(configuration) === false ? (
-          <div className='app-body'>
-            <div className='app-body-header-wrapper'>
-              <AccountWrapper
-                accountInfo={accountInfo}
-                dustTransfer={dustTransfer}
+        fetch(configuration.botOptions.language + '.json')
+          .then(res => res.json())
+          .then(data => (languageData = data));
+      }
+
+      if (login === {} || (passwordActivated && !login.logged)) {
+        return (
+          <div className='app'>
+            <PasswordScreen
+              jsonStrings={languageData}
+              configuration={configuration}
+              sendWebSocket={this.sendWebSocket}
+            />
+          </div>
+        );
+      }
+
+      if (login.logged) {
+        if (languageData != undefined) {
+          const coinWrappers = symbols.map((symbol, index) => {
+            if (searchKeyword != '') {
+              if (symbol.symbol.includes(searchKeyword)) {
+                return (
+                  <CoinWrapper
+                    extraClassName={
+                      index % 2 === 0 ? 'coin-wrapper-even' : 'coin-wrapper-odd'
+                    }
+                    key={'coin-wrapper-' + symbol.symbol}
+                    symbolInfo={symbol}
+                    configuration={configuration}
+                    sendWebSocket={this.sendWebSocket}
+                    jsonStrings={languageData}
+                  />
+                );
+              }
+            } else {
+              return (
+                <CoinWrapper
+                  extraClassName={
+                    index % 2 === 0 ? 'coin-wrapper-even' : 'coin-wrapper-odd'
+                  }
+                  key={'coin-wrapper-' + symbol.symbol}
+                  symbolInfo={symbol}
+                  configuration={configuration}
+                  sendWebSocket={this.sendWebSocket}
+                  jsonStrings={languageData}
+                />
+              );
+            }
+          });
+
+          return (
+            <div className='app'>
+              <Header
+                configuration={configuration}
+                publicURL={publicURL}
+                exchangeSymbols={exchangeSymbols}
+                sendWebSocket={this.sendWebSocket}
+                jsonStrings={languageData}
+              />
+              {_.isEmpty(configuration) === false ? (
+                <div className='app-body'>
+                  <div className='app-body-header-wrapper'>
+                    <AccountWrapper
+                      accountInfo={accountInfo}
+                      dustTransfer={dustTransfer}
+                      sendWebSocket={this.sendWebSocket}
+                      jsonStrings={languageData}
+                    />
+                    <ProfitLossWrapper
+                      symbols={symbols}
+                      sendWebSocket={this.sendWebSocket}
+                      jsonStrings={languageData}
+                    />
+                    <MonitorOptionsWrapper
+                      jsonStrings={languageData}
+                      searchKeyword={this.searchKeyword}
+                      sortSymbols={this.sortSymbols}
+                    />
+                  </div>
+                  <div className='coin-wrappers'>{coinWrappers}</div>
+                  <div className='app-body-footer-wrapper'>
+                    <Status apiInfo={apiInfo} jsonStrings={languageData} />
+                  </div>
+                </div>
+              ) : (
+                <div className='app-body app-body-loading'>
+                  <Spinner animation='border' role='status'>
+                    <span className='sr-only'>Loading...</span>
+                  </Spinner>
+                </div>
+              )}
+
+              <PastTradesWrapper
+                pastTrades={[...pastTrades]}
+                jsonStrings={languageData}
                 sendWebSocket={this.sendWebSocket}
               />
-              <ProfitLossWrapper
-                symbols={symbols}
-                sendWebSocket={this.sendWebSocket}
+
+              <Footer
+                packageVersion={packageVersion}
+                gitHash={gitHash}
+                jsonStrings={languageData}
               />
             </div>
-            <div className='coin-wrappers'>{coinWrappers}</div>
-            <div className='app-body-footer-wrapper'>
-              <Status apiInfo={apiInfo} />
-            </div>
-          </div>
-        ) : (
-          <div className='app-body app-body-loading'>
-            <Spinner animation='border' role='status'>
-              <span className='sr-only'>Loading...</span>
-            </Spinner>
-          </div>
-        )}
-
-        <Footer packageVersion={packageVersion} gitHash={gitHash} />
-      </div>
-    );
+          );
+        } else {
+          return '';
+        }
+      } else {
+        return '';
+      }
+    } else {
+      return '';
+    }
   }
 }
 

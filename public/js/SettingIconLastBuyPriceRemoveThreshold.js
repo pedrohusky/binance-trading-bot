@@ -16,15 +16,10 @@ class SettingIconLastBuyPriceRemoveThreshold extends React.Component {
     // Only update configuration, when the modal is closed and different.
     if (
       _.isEmpty(nextProps.lastBuyPriceRemoveThresholds) === false &&
-      _.isEqual(
-        nextProps.lastBuyPriceRemoveThresholds,
-        this.state.lastBuyPriceRemoveThresholds
-      ) === false
+      _.isEqual(nextProps.lastBuyPriceRemoveThresholds, this.state.lastBuyPriceRemoveThresholds) ===
+      false
     ) {
       const { lastBuyPriceRemoveThresholds } = nextProps;
-      console.log('lastBuyPriceRemoveThreshold has changed', {
-        lastBuyPriceRemoveThresholds
-      });
       this.setState({
         lastBuyPriceRemoveThresholds
       });
@@ -37,53 +32,40 @@ class SettingIconLastBuyPriceRemoveThreshold extends React.Component {
       target.type === 'checkbox'
         ? target.checked
         : target.type === 'number'
-        ? +target.value
-        : target.value;
+          ? +target.value
+          : target.value;
     const stateKey = target.getAttribute('data-state-key');
 
     const { lastBuyPriceRemoveThresholds } = this.state;
 
-    console.log(
-      '_.set(lastBuyPriceRemoveThresholds, stateKey, value) => ',
-      _.set(lastBuyPriceRemoveThresholds, stateKey, value)
-    );
-
-    const newLastBuyPriceRemoveThresholds = _.set(
-      lastBuyPriceRemoveThresholds,
-      stateKey,
-      value
-    );
+    const newLastBuyPriceRemoveThresholds = _.set(lastBuyPriceRemoveThresholds, stateKey, value);
     this.setState({
       lastBuyPriceRemoveThresholds: newLastBuyPriceRemoveThresholds
     });
 
-    this.props.handleLastBuyPriceRemoveThresholdChange(
-      lastBuyPriceRemoveThresholds
-    );
+    this.props.handleLastBuyPriceRemoveThresholdChange(lastBuyPriceRemoveThresholds);
   }
 
   render() {
-    const { quoteAssets } = this.props;
+    const { quoteAssets, jsonStrings } = this.props;
     const { lastBuyPriceRemoveThresholds } = this.state;
 
-    if (_.isEmpty(lastBuyPriceRemoveThresholds)) {
+    if (_.isEmpty(lastBuyPriceRemoveThresholds) || _.isEmpty(jsonStrings)) {
       return '';
     }
+
+    const { setting_icon, common_strings } = jsonStrings;
 
     return quoteAssets.map((quoteAsset, index) => {
       return (
         <div
-          key={quoteAsset + '-' + index}
+          key={'quote-asset-' + quoteAsset + '-' + index}
           className='coin-info-last-buy-remove-threshold-wrapper'>
           <Form.Group
-            controlId={
-              'field-min-last-buy-remove-threshold-limit-percentage-' +
-              quoteAsset
-            }
+            controlId={'field-min-last-buy-remove-threshold-limit-percentage-' + quoteAsset}
             className='mb-2'>
             <Form.Label className='mb-0'>
-              Remove last buy price for {quoteAsset} when the estimated value is
-              lower than{' '}
+              {common_strings.last_buy_price_remove_threshold}{' '}
               <OverlayTrigger
                 trigger='click'
                 key={'last-buy-remove-threshold-overlay-' + quoteAsset}
@@ -92,12 +74,10 @@ class SettingIconLastBuyPriceRemoveThreshold extends React.Component {
                   <Popover
                     id={'last-buy-remove-threshold-overlay-right' + quoteAsset}>
                     <Popover.Content>
-                      Set the last buy price removal threshold for symbols with
-                      quote asset "{quoteAsset}". When the estimated value drops
-                      below the threshold, the bot will remove the last buy
-                      price. The threshold will be applied to the symbols which
-                      end with "{quoteAsset}" if not configured in the symbol
-                      configuration.
+                      {setting_icon.last_buy_price_remove_threshold_description[1]} "
+                      {quoteAsset}".
+
+                      {setting_icon.last_buy_price_remove_threshold_description[2]}
                     </Popover.Content>
                   </Popover>
                 }>
@@ -106,17 +86,24 @@ class SettingIconLastBuyPriceRemoveThreshold extends React.Component {
                 </Button>
               </OverlayTrigger>
             </Form.Label>
-            <Form.Control
-              size='sm'
-              type='number'
-              placeholder={'Enter last buy threshold for ' + quoteAsset}
-              required
-              min='0.0001'
-              step='0.0001'
-              data-state-key={quoteAsset}
-              value={lastBuyPriceRemoveThresholds[quoteAsset]}
-              onChange={this.handleInputChange}
-            />
+            <InputGroup size='sm'>
+              <FormControl
+                size='sm'
+                type='number'
+                placeholder={setting_icon.placeholder_last_buy_remove_price_threshold}
+                required
+                min='0.0001'
+                step='0.0001'
+                data-state-key={quoteAsset}
+                value={lastBuyPriceRemoveThresholds[quoteAsset]}
+                onChange={this.handleInputChange}
+              />
+              <InputGroup.Append>
+                <InputGroup.Text>
+                  {quoteAsset}
+                </InputGroup.Text>
+              </InputGroup.Append>
+            </InputGroup>
           </Form.Group>
         </div>
       );

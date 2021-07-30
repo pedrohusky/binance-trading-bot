@@ -1,7 +1,7 @@
 const moment = require('moment-timezone');
 const config = require('config');
 const aliveHelper = require('./alive/helper');
-const { slack } = require('../helpers');
+const { messenger } = require('../helpers');
 
 const execute = async logger => {
   logger.info('Alive: Notify balance');
@@ -22,10 +22,10 @@ const execute = async logger => {
       .tz(config.get('tz'))
       .format('YYYY-MM-DD HH:mm:ss')} (${config.get('tz')})_`;
 
-    slack.sendMessage(message);
+    messenger.sendMessage(message, null, 'BALANCE_INFO');
   } catch (e) {
     logger.error(e, 'Execution failed.');
-    slack.sendMessage(`Execution failed\n\`\`\`${e.message}\`\`\``);
+    messenger.sendMessage(`Execution failed\n\`\`\`${e.message}\`\`\``);
   }
 };
 

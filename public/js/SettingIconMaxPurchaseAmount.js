@@ -17,7 +17,7 @@ class SettingIconMaxPurchaseAmount extends React.Component {
     if (
       _.isEmpty(nextProps.maxPurchaseAmounts) === false &&
       _.isEqual(nextProps.maxPurchaseAmounts, this.state.maxPurchaseAmounts) ===
-        false
+      false
     ) {
       const { maxPurchaseAmounts } = nextProps;
 
@@ -33,8 +33,8 @@ class SettingIconMaxPurchaseAmount extends React.Component {
       target.type === 'checkbox'
         ? target.checked
         : target.type === 'number'
-        ? +target.value
-        : target.value;
+          ? +target.value
+          : target.value;
     const stateKey = target.getAttribute('data-state-key');
 
     const { maxPurchaseAmounts } = this.state;
@@ -48,12 +48,14 @@ class SettingIconMaxPurchaseAmount extends React.Component {
   }
 
   render() {
-    const { quoteAssets } = this.props;
+    const { quoteAssets, jsonStrings } = this.props;
     const { maxPurchaseAmounts } = this.state;
 
-    if (_.isEmpty(maxPurchaseAmounts)) {
+    if (_.isEmpty(maxPurchaseAmounts) || _.isEmpty(jsonStrings)) {
       return '';
     }
+
+    const { setting_icon } = jsonStrings;
 
     return quoteAssets.map((quoteAsset, index) => {
       return (
@@ -61,10 +63,10 @@ class SettingIconMaxPurchaseAmount extends React.Component {
           key={'quote-asset-' + quoteAsset + '-' + index}
           className='coin-info-max-purchase-amount-wrapper'>
           <Form.Group
-            controlId={'field-max-limit-percentage-' + quoteAsset}
+            controlId={'field-max-purchase-amount-percentage-' + quoteAsset}
             className='mb-2'>
             <Form.Label className='mb-0'>
-              Max purchase amount for {quoteAsset}{' '}
+              {setting_icon.max_purchase_amount_for}{' '}
               <OverlayTrigger
                 trigger='click'
                 key={'max-purchase-amount-overlay-' + quoteAsset}
@@ -73,10 +75,7 @@ class SettingIconMaxPurchaseAmount extends React.Component {
                   <Popover
                     id={'max-purchase-amount-overlay-right' + quoteAsset}>
                     <Popover.Content>
-                      Set max purchase amount for symbols with quote asset "
-                      {quoteAsset}". The max purchase amount will be applied to
-                      the symbols which ends with "{quoteAsset}" if not
-                      configured the symbol configuration.
+                      {setting_icon.max_purchase_amount_description} {quoteAsset}
                     </Popover.Content>
                   </Popover>
                 }>
@@ -85,17 +84,24 @@ class SettingIconMaxPurchaseAmount extends React.Component {
                 </Button>
               </OverlayTrigger>
             </Form.Label>
-            <Form.Control
-              size='sm'
-              type='number'
-              placeholder={'Enter max purchase amount for ' + quoteAsset}
-              required
-              min='0'
-              step='0.0001'
-              data-state-key={quoteAsset}
-              value={maxPurchaseAmounts[quoteAsset]}
-              onChange={this.handleInputChange}
-            />
+            <InputGroup size='sm'>
+              <FormControl
+                size='sm'
+                type='number'
+                placeholder={setting_icon.placeholder_max_purchase_amount}
+                required
+                min='0'
+                step='0.0001'
+                data-state-key={quoteAsset}
+                value={maxPurchaseAmounts[quoteAsset]}
+                onChange={this.handleInputChange}
+              />
+              <InputGroup.Append>
+                <InputGroup.Text>
+                  {quoteAsset}
+                </InputGroup.Text>
+              </InputGroup.Append>
+            </InputGroup>
           </Form.Group>
         </div>
       );

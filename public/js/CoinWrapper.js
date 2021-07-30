@@ -3,7 +3,7 @@
 /* eslint-disable no-undef */
 class CoinWrapper extends React.Component {
   render() {
-    const { symbolInfo, sendWebSocket, configuration } = this.props;
+    const { symbolInfo, sendWebSocket, configuration, jsonStrings } = this.props;
 
     const {
       symbol,
@@ -19,6 +19,10 @@ class CoinWrapper extends React.Component {
       quoteAssetBalance
     } = symbolInfo;
 
+    if (_.isEmpty(jsonStrings)) {
+      return '';
+    }
+
     const baseAssetStepSize =
       parseFloat(filterLotSize.stepSize) === 1
         ? 0
@@ -29,6 +33,8 @@ class CoinWrapper extends React.Component {
         : filterPrice.tickSize.indexOf(1) - 1;
 
     const className = 'coin-wrapper ' + this.props.extraClassName;
+
+    console.log(symbolInfo)
 
     return (
       <div className={className} data-symbol={symbolInfo.symbol}>
@@ -48,32 +54,44 @@ class CoinWrapper extends React.Component {
             quoteAssetBalance={quoteAssetBalance}
             configuration={configuration}
             sendWebSocket={sendWebSocket}
+            jsonStrings={jsonStrings}
           />
-          <CoinWrapperBalance symbolInfo={symbolInfo} />
+          <CoinWrapperBalance
+            symbolInfo={symbolInfo}
+            jsonStrings={jsonStrings}
+          />
           <CoinWrapperSetting
             symbolInfo={symbolInfo}
             configuration={configuration}
             sendWebSocket={sendWebSocket}
+            jsonStrings={jsonStrings}
           />
 
           <CoinWrapperAction
             symbolInfo={symbolInfo}
             sendWebSocket={sendWebSocket}
+            jsonStrings={jsonStrings}
           />
 
-          <CoinWrapperBuySignal symbolInfo={symbolInfo} />
+          <CoinWrapperBuySignal
+            symbolInfo={symbolInfo}
+            jsonStrings={jsonStrings}
+          />
           <CoinWrapperBuyOrders
             symbolInfo={symbolInfo}
             sendWebSocket={sendWebSocket}
+            jsonStrings={jsonStrings}
           />
 
           <CoinWrapperSellSignal
             symbolInfo={symbolInfo}
             sendWebSocket={sendWebSocket}
+            jsonStrings={jsonStrings}
           />
           <CoinWrapperSellOrders
             symbolInfo={symbolInfo}
             sendWebSocket={sendWebSocket}
+            jsonStrings={jsonStrings}
           />
         </div>
       </div>

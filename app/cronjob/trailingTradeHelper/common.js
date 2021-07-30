@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const { cache, binance, mongo } = require('../../helpers');
+const { cache, binance, mongo, messenger } = require('../../helpers');
 
 const isValidCachedExchangeSymbols = exchangeSymbols =>
   _.get(
@@ -9,7 +9,7 @@ const isValidCachedExchangeSymbols = exchangeSymbols =>
   ) !== null;
 
 /**
- * Retreive cached exhcnage symbols.
+ * Retrieve cached exchange symbols.
  *  If not cached, retrieve exchange info from API and cache it.
  *
  * @param {*} logger
@@ -135,35 +135,52 @@ const extendBalancesWithDustTransfer = async (_logger, rawAccountInfo) => {
  *
  * @param {*} logger
  */
-const getAccountInfoFromAPI = async logger => {
-  logger.info({ tag: 'get-account-info' }, 'Retrieving account info from API');
-  const accountInfo = await binance.client.accountInfo();
+let lastVerifiedTime = '';
+const getAccountInfoFromAPI = async (logger, now = false) => {
+  let accountInfo;
+  if (now === false) {
+    accountInfo =
+      JSON.parse(
+        await cache.hgetWithoutLock('trailing-trade-common', 'account-info')
+      ) || {};
+  }
 
-  accountInfo.balances = accountInfo.balances.reduce((acc, b) => {
-    const balance = b;
-    if (+balance.free > 0 || +balance.locked > 0) {
-      acc.push(balance);
-    }
+  const difference = (new Date() - lastVerifiedTime) / 1000;
 
-    return acc;
-  }, []);
+  if (difference > 5.5 || lastVerifiedTime === '' || now === true) {
+    logger.info(
+      { tag: 'get-account-info' },
+      'Retrieving account info from API'
+    );
+    accountInfo = await binance.client.accountInfo();
 
-  logger.info(
-    { tag: 'get-account-info', accountInfo },
-    'Retrieved account information from API'
-  );
+    accountInfo.balances = accountInfo.balances.reduce((acc, b) => {
+      const balance = b;
+      if (+balance.free > 0 || +balance.locked > 0) {
+        acc.push(balance);
+      }
 
-  await cache.hset(
-    'trailing-trade-common',
-    'account-info',
-    JSON.stringify(accountInfo)
-  );
+      return acc;
+    }, []);
 
+    logger.info(
+      { tag: 'get-account-info', accountInfo },
+      'Retrieved account information from API'
+    );
+
+    await cache.hset(
+      'trailing-trade-common',
+      'account-info',
+      JSON.stringify(accountInfo)
+    );
+
+    lastVerifiedTime = new Date();
+  }
   return accountInfo;
 };
 
 /**
- * Retreive account info from cache
+ * Retrieve account info from cache
  *  If empty, retrieve from API
  *
  * @param {*} logger
@@ -190,22 +207,27 @@ const getAccountInfo = async logger => {
   return getAccountInfoFromAPI(logger);
 };
 
+let lastGetOrderTime = '';
 /**
  * Get open orders
  *
  * @param {*} logger
  */
 const getOpenOrdersFromAPI = async logger => {
-  logger.info(
-    { debug: true, function: 'openOrders' },
-    'Retrieving open orders from API'
-  );
-  const openOrders = await binance.client.openOrders({
-    recvWindow: 10000
-  });
-  logger.info({ openOrders }, 'Retrieved open orders from API');
-
-  return openOrders;
+  const now = new Date();
+  const difference = (now - lastGetOrderTime) / 1000;
+  if (difference > 3 || lastGetOrderTime === '') {
+    logger.info(
+      { debug: true, function: 'openOrders' },
+      'Retrieving open orders from API'
+    );
+    const openOrders = await binance.client.openOrders({
+      recvWindow: 10000
+    });
+    logger.info({ openOrders }, 'Retrieved open orders from API');
+    lastGetOrderTime = new Date();
+    return openOrders;
+  }
 };
 
 /**
@@ -214,16 +236,32 @@ const getOpenOrdersFromAPI = async logger => {
  * @param {*} logger
  * @param {*} symbol
  */
+let lastVerify = '';
 const getOpenOrdersBySymbolFromAPI = async (logger, symbol) => {
-  logger.info(
-    { debug: true, function: 'openOrders' },
-    'Retrieving open orders by symbol from API'
-  );
-  const openOrders = await binance.client.openOrders({
-    symbol,
-    recvWindow: 10000
-  });
-  logger.info({ openOrders }, 'Retrieved open orders by symbol from API');
+  const difference = (new Date() - lastVerify) / 1000;
+  let openOrders = {};
+  if (difference > 1.25 || lastVerify === '') {
+    logger.info(
+      { debug: true, function: 'openOrders' },
+      'Retrieving open orders by symbol from API'
+    );
+    lastVerify = new Date();
+    openOrders = await binance.client.openOrders({
+      symbol,
+      recvWindow: 10000
+    });
+    lastVerify = new Date();
+    logger.info({ openOrders }, 'Retrieved open orders by symbol from API');
+    await cache.hset(
+      'trailing-trade-orders',
+      symbol,
+      JSON.stringify(openOrders)
+    );
+    lastVerify = new Date();
+  } else {
+    openOrders =
+      JSON.parse(await cache.hget('trailing-trade-orders', symbol)) || [];
+  }
 
   return openOrders;
 };
@@ -249,12 +287,6 @@ const getAndCacheOpenOrdersForSymbol = async (logger, symbol) => {
     'Open orders from API'
   );
 
-  await cache.hset(
-    'trailing-trade-orders',
-    symbol,
-    JSON.stringify(symbolOpenOrders)
-  );
-
   return symbolOpenOrders;
 };
 
@@ -276,7 +308,11 @@ const getLastBuyPrice = async (logger, symbol) =>
  * @param {*} symbol
  * @param {*} param2
  */
-const saveLastBuyPrice = async (logger, symbol, { lastBuyPrice, quantity }) => {
+const saveLastBuyPrice = async (
+  logger,
+  symbol,
+  { lastBuyPrice, quantity, lastBoughtPrice = 0 }
+) => {
   logger.info(
     { tag: 'save-last-buy-price', symbol, lastBuyPrice, quantity },
     'Save last buy price'
@@ -288,7 +324,8 @@ const saveLastBuyPrice = async (logger, symbol, { lastBuyPrice, quantity }) => {
     {
       key: `${symbol}-last-buy-price`,
       lastBuyPrice,
-      quantity
+      quantity,
+      lastBoughtPrice
     }
   );
 };
@@ -403,7 +440,7 @@ const getAPILimit = logger => {
  */
 const isExceedAPILimit = logger => {
   const usedWeight1m = getAPILimit(logger);
-  return usedWeight1m > 1180;
+  return usedWeight1m > 1160;
 };
 
 /**

@@ -35,12 +35,12 @@ class SymbolEditLastBuyPriceIcon extends React.Component {
 
     const {
       symbol,
-      sell: { lastBuyPrice }
+      sell: { lastBuyPrice, lastQtyBought }
     } = this.state.symbolInfo;
 
     this.props.sendWebSocket('symbol-update-last-buy-price', {
       symbol,
-      sell: { lastBuyPrice }
+      sell: { lastBuyPrice, lastQtyBought }
     });
     this.handleModalClose();
   }
@@ -63,8 +63,8 @@ class SymbolEditLastBuyPriceIcon extends React.Component {
       target.type === 'checkbox'
         ? target.checked
         : target.type === 'number'
-        ? +target.value
-        : target.value;
+          ? +target.value
+          : target.value;
     const stateKey = target.getAttribute('data-state-key');
 
     const { symbolInfo } = this.state;
@@ -76,10 +76,12 @@ class SymbolEditLastBuyPriceIcon extends React.Component {
 
   render() {
     const { symbolInfo } = this.state;
+    const { jsonStrings: { symbol_edit_last_buy_price, common_strings } } = this.props;
 
     if (_.isEmpty(symbolInfo)) {
       return '';
     }
+
 
     return (
       <div className='symbol-edit-last-buy-price-icon-wrapper'>
@@ -93,17 +95,17 @@ class SymbolEditLastBuyPriceIcon extends React.Component {
           <Form onSubmit={this.handleFormSubmit}>
             <Modal.Header className='pt-1 pb-1'>
               <Modal.Title>
-                Edit Last Buy Price for {symbolInfo.symbol}
+                {symbol_edit_last_buy_price.edit_last_buy} {symbolInfo.symbol}
               </Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              <h2 className='form-header'>Sell Signal</h2>
+              <h2 className='form-header'>{common_strings.sell_signal}</h2>
               <Form.Group controlId='field-candles-interval'>
-                <Form.Label>Last Buy Price</Form.Label>
+                <Form.Label>{common_strings.last_buy_price}</Form.Label>
                 <Form.Control
                   size='sm'
                   type='number'
-                  placeholder='Enter last buy price'
+                  placeholder={symbol_edit_last_buy_price.placeholder_last_buy}
                   required
                   min='0'
                   step='0.00000001'
@@ -112,23 +114,37 @@ class SymbolEditLastBuyPriceIcon extends React.Component {
                   onChange={this.handleInputChange}
                 />
                 <Form.Text className='text-muted'>
-                  Set/modify the last buy price of the symbol.
+                  {symbol_edit_last_buy_price.edit_last_buy_description[1]}
                   <br />
                   <br />
-                  If the bot purchased the coin, then the last buy price will
-                  automatically set.
+                  {symbol_edit_last_buy_price.edit_last_buy_description[2]}
                   <br />
                   <br />
-                  If you purchased the coin manually, then you can set the last
-                  buy price to allow the bot to sell at the expected price.
+                  {symbol_edit_last_buy_price.edit_last_buy_description[3]}
                   <br />
                   <br />
-                  Once the last buy price is set, then the bot will start
-                  monitoring the sell signal.
+                  {symbol_edit_last_buy_price.edit_last_buy_description[4]}
                   <br />
                   <br />
-                  If you want to remove the last buy price, simply enter{' '}
-                  <code>0</code>.
+                  {symbol_edit_last_buy_price.edit_last_buy_description[5]}
+                </Form.Text>
+              </Form.Group>
+
+              <Form.Group controlId='field-candles-interval'>
+                <Form.Label>{common_strings.last_qty_bought}</Form.Label>
+                <Form.Control
+                  size='sm'
+                  type='number'
+                  placeholder={symbol_edit_last_buy_price.placeholder_last_qty_bought}
+                  required
+                  min='0'
+                  step='0.00000001'
+                  data-state-key='sell.lastQtyBought'
+                  defaultValue={symbolInfo.sell.lastQtyBought}
+                  onChange={this.handleInputChange}
+                />
+                <Form.Text className='text-muted'>
+                  {symbol_edit_last_buy_price.edit_last_qty_bought_description}
                 </Form.Text>
               </Form.Group>
             </Modal.Body>
@@ -137,10 +153,10 @@ class SymbolEditLastBuyPriceIcon extends React.Component {
                 variant='secondary'
                 size='sm'
                 onClick={this.handleModalClose}>
-                Close
+                {common_strings._close}
               </Button>
               <Button type='submit' variant='primary' size='sm'>
-                Save Changes
+                {common_strings.save_changes}
               </Button>
             </Modal.Footer>
           </Form>

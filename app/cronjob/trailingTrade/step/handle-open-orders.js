@@ -1,12 +1,10 @@
 /* eslint-disable no-await-in-loop */
-const moment = require('moment');
 const _ = require('lodash');
 
-const { slack, binance } = require('../../../helpers');
+const { messenger, binance, cache } = require('../../../helpers');
 const {
   getAndCacheOpenOrdersForSymbol,
-  getAccountInfoFromAPI,
-  getAPILimit
+  getAccountInfoFromAPI
 } = require('../../trailingTradeHelper/common');
 
 /**
@@ -28,8 +26,20 @@ const cancelOrder = async (logger, symbol, order) => {
       symbol,
       orderId: order.orderId
     });
-    logger.info({ apiResult }, 'Cancelled open orders');
 
+    const cachedLastBuyOrder =
+      JSON.parse(await cache.get(`${symbol}-last-buy-order`)) || {};
+    if (!_.isEmpty(cachedLastBuyOrder)) {
+      await cache.del(`${symbol}-last-buy-order`);
+    }
+
+    const cachedLastSellOrder =
+      JSON.parse(await cache.get(`${symbol}-last-sell-order`)) || {};
+    if (!_.isEmpty(cachedLastSellOrder)) {
+      await cache.del(`${symbol}-last-sell-order`);
+    }
+
+    logger.info({ apiResult }, 'Cancelled open orders');
     result = true;
   } catch (e) {
     logger.info(
@@ -57,8 +67,17 @@ const execute = async (logger, rawData) => {
     action,
     isLocked,
     openOrders,
-    buy: { limitPrice: buyLimitPrice },
-    sell: { limitPrice: sellLimitPrice }
+    buy: {
+      limitPrice: buyLimitPrice,
+      trend: { signedTrendDiff },
+      updatedAt: buyUpdatedAt
+    },
+    sell: { limitPrice: sellLimitPrice, updatedAt: sellUpdatedAt },
+    symbolConfiguration: {
+      strategyOptions: {
+        huskyOptions: { buySignal, sellSignal }
+      }
+    }
   } = data;
 
   if (isLocked) {
@@ -68,8 +87,7 @@ const execute = async (logger, rawData) => {
     );
     return data;
   }
-
-  if (action !== 'not-determined') {
+  if (action !== 'not-determined' || _.isEmpty(openOrders)) {
     logger.info(
       { action },
       'Action is already defined, do not try to handle open orders.'
@@ -85,7 +103,14 @@ const execute = async (logger, rawData) => {
     }
     // Is the stop price is higher than current limit price?
     if (order.side.toLowerCase() === 'buy') {
-      if (parseFloat(order.stopPrice) >= buyLimitPrice) {
+      let isHuskySignalActivated = false;
+      if (buySignal) {
+        isHuskySignalActivated = signedTrendDiff === -1;
+      }
+      if (
+        parseFloat(order.stopPrice) >= buyLimitPrice ||
+        isHuskySignalActivated
+      ) {
         logger.info(
           { stopPrice: order.stopPrice, buyLimitPrice },
           'Stop price is higher than buy limit price, cancel current buy order'
@@ -108,52 +133,58 @@ const execute = async (logger, rawData) => {
           );
 
           // Refresh account info
-          data.accountInfo = await getAccountInfoFromAPI(logger);
+          data.accountInfo = await getAccountInfoFromAPI(logger, true);
 
           data.action = 'buy-order-checking';
 
           if (_.get(featureToggle, 'notifyDebug', false) === true) {
-            slack.sendMessage(
-              `${symbol} Action (${moment().format(
-                'HH:mm:ss.SSS'
-              )}): Failed cancelling buy order\n` +
-                `- Message: Binance API returned an error when cancelling the buy order.` +
-                ` Refreshed open orders and wait for next tick.\n` +
-                `\`\`\`${JSON.stringify(
-                  {
-                    order,
-                    openOrders: data.openOrders,
-                    accountInfo: data.accountInfo
-                  },
-                  undefined,
-                  2
-                )}\`\`\`\n` +
-                `- Current API Usage: ${getAPILimit(logger)}`
-            );
+            messenger.sendMessage(symbol, order, 'CANCEL_BUY_FAILED');
           }
         } else {
           // Reset buy open orders
           data.buy.openOrders = [];
 
+          messenger.errorMessage(`Buy order removed. ${symbol}`);
+
           // Set action as buy
           data.action = 'buy';
 
           // Get account information again because the order is cancelled
-          data.accountInfo = await getAccountInfoFromAPI(logger);
+          data.accountInfo = await getAccountInfoFromAPI(logger, true);
         }
       } else {
         logger.info(
           { stopPrice: order.stopPrice, buyLimitPrice },
           'Stop price is less than buy limit price, wait for buy order'
         );
-        // Set action as buy
-        data.action = 'buy-order-wait';
+
+        if ((buyUpdatedAt - order.updatedAt) / 1000 > 20) {
+          await cancelOrder(logger, symbol, order);
+          data.buy.openOrders = [];
+
+          messenger.errorMessage(`Order buy expired. ${symbol}`);
+
+          // Set action as buy
+          data.action = 'buy';
+
+          // Get account information again because the order is cancelled
+          data.accountInfo = await getAccountInfoFromAPI(logger, true);
+        } else {
+          data.action = 'buy-order-wait';
+        }
       }
     }
 
     // Is the stop price is less than current limit price?
     if (order.side.toLowerCase() === 'sell') {
-      if (parseFloat(order.stopPrice) <= sellLimitPrice) {
+      let isHuskySellSignalActivated = false;
+      if (sellSignal) {
+        isHuskySellSignalActivated = signedTrendDiff === 1;
+      }
+      if (
+        parseFloat(order.stopPrice) <= sellLimitPrice ||
+        isHuskySellSignalActivated
+      ) {
         logger.info(
           { stopPrice: order.stopPrice, sellLimitPrice },
           'Stop price is less than sell limit price, cancel current sell order'
@@ -176,45 +207,46 @@ const execute = async (logger, rawData) => {
           );
 
           // Refresh account info
-          data.accountInfo = await getAccountInfoFromAPI(logger);
+          data.accountInfo = await getAccountInfoFromAPI(logger, true);
 
           data.action = 'sell-order-checking';
 
           if (_.get(featureToggle, 'notifyDebug', false) === true) {
-            slack.sendMessage(
-              `${symbol} Action (${moment().format(
-                'HH:mm:ss.SSS'
-              )}): Failed cancelling sell order\n` +
-                `- Message: Binance API returned an error when cancelling the buy order.` +
-                ` Refreshed open orders and wait for next tick.\n` +
-                `\`\`\`${JSON.stringify(
-                  {
-                    order,
-                    openOrders: data.openOrders,
-                    accountInfo: data.accountInfo
-                  },
-                  undefined,
-                  2
-                )}\`\`\`\n` +
-                `- Current API Usage: ${getAPILimit(logger)}`
-            );
+            messenger.sendMessage(symbol, order, 'CANCEL_SELL_FAILED');
           }
         } else {
           // Reset sell open orders
           data.sell.openOrders = [];
 
+          messenger.errorMessage(`Order sell removed. ${symbol}`);
+
           // Set action as sell
           data.action = 'sell';
 
           // Get account information again because the order is cancelled
-          data.accountInfo = await getAccountInfoFromAPI(logger);
+          data.accountInfo = await getAccountInfoFromAPI(logger, true);
         }
       } else {
         logger.info(
           { stopPrice: order.stopPrice, sellLimitPrice },
           'Stop price is higher than sell limit price, wait for sell order'
         );
-        data.action = 'sell-order-wait';
+
+        if ((sellUpdatedAt - order.updatedAt) / 1000 > 20) {
+          await cancelOrder(logger, symbol, order);
+          // Reset sell open orders
+          data.sell.openOrders = [];
+
+          messenger.errorMessage(`Order sell expired. ${symbol}`);
+
+          // Set action as sell
+          data.action = 'sell';
+
+          // Get account information again because the order is cancelled
+          data.accountInfo = await getAccountInfoFromAPI(logger, true);
+        } else {
+          data.action = 'sell-order-wait';
+        }
       }
     }
     logger.info({ action: data.action }, 'Determined action');

@@ -5,58 +5,64 @@ class CoinWrapperAction extends React.Component {
   render() {
     const {
       symbolInfo: { symbol, action, buy, isLocked, isActionDisabled },
-      sendWebSocket
+      sendWebSocket,
+      jsonStrings
     } = this.props;
 
+
+    const { coin_wrapper, common_strings } = jsonStrings;
     let label;
     switch (action) {
       case 'buy':
-        label = 'Buy';
+        label = common_strings._buy;
         break;
       case 'buy-temporary-disabled':
-        label = 'Temporary disabled';
+        label = coin_wrapper._actions.action_disabled;
         break;
       case 'buy-order-checking':
-        label = 'Checking for buy order';
+        label = coin_wrapper._actions.action_buy_check;
+        break;
+      case 'buy-order-filled':
+        label = coin_wrapper._actions.action_buy_filled;
         break;
       case 'buy-order-wait':
-        label = 'Wait for buy order';
+        label = coin_wrapper._actions.action_buy_wait;
         break;
       case 'sell':
-        label = 'Sell';
+        label = common_strings._sell;
         break;
       case 'sell-temporary-disabled':
-        label = 'Temporary disabled';
+        label = coin_wrapper._actions.action_disabled;
         break;
       case 'sell-stop-loss':
-        label = 'Selling due to stop-loss';
+        label = coin_wrapper._actions.action_selling_stop_loss;
         break;
       case 'sell-order-checking':
-        label = 'Checking for sell order';
+        label = coin_wrapper._actions.action_sell_check;
         break;
       case 'sell-order-wait':
-        label = 'Wait for sell order';
+        label = coin_wrapper._actions.action_sell_wait;
         break;
       case 'sell-wait':
-        label = 'Wait';
+        label = coin_wrapper._wait;
         break;
       default:
-        label = 'Wait';
+        label = coin_wrapper._wait;
     }
 
     if (isLocked) {
-      label = 'Locked';
+      label = common_strings._locked;
     }
 
     if (isActionDisabled.isDisabled) {
-      label = `Disabled by ${isActionDisabled.disabledBy}`;
+      label = coin_wrapper._actions.disabled_by + isActionDisabled.disabledBy;
     }
 
     return (
       <div className='coin-info-sub-wrapper'>
         <div className='coin-info-column coin-info-column-title border-bottom-0 mb-0 pb-0'>
           <div className='coin-info-label'>
-            Action -{' '}
+            {common_strings._action} -{' '}
             <span className='coin-info-value'>
               {moment(buy.updatedAt).format('HH:mm:ss')}
             </span>
@@ -78,12 +84,13 @@ class CoinWrapperAction extends React.Component {
                   <SymbolEnableActionIcon
                     symbol={symbol}
                     className='mr-1'
-                    sendWebSocket={sendWebSocket}></SymbolEnableActionIcon>
+                    sendWebSocket={sendWebSocket}
+                    jsonStrings={jsonStrings}></SymbolEnableActionIcon>
                 ) : (
                   ''
                 )}
                 ({moment.duration(isActionDisabled.ttl, 'seconds').humanize()}{' '}
-                left){' '}
+                {common_strings.time_remaining}){' '}
               </div>
             ) : (
               ''

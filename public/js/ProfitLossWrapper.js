@@ -55,8 +55,13 @@ class ProfitLossWrapper extends React.Component {
   }
 
   render() {
-    const { sendWebSocket } = this.props;
+    const { jsonStrings, sendWebSocket } = this.props;
     const { totalPnL, symbols } = this.state;
+
+    if (_.isEmpty(jsonStrings)) {
+      return '';
+    }
+    const { profit_loss_wrapper, common_strings } = jsonStrings;
 
     const quoteAssets = Object.values(totalPnL).map((pnl, index) => {
       const percentage =
@@ -80,12 +85,12 @@ class ProfitLossWrapper extends React.Component {
     return (
       <div className='accordion-wrapper profit-loss-accordion-wrapper'>
         <Accordion defaultActiveKey='0'>
-          <Card bg='dark'>
+          <Card>
             <Card.Header className='px-2 py-1'>
               <div className='d-flex flex-row justify-content-between'>
                 <div className='flex-column-left'>
                   <div className='btn-profit-loss text-uppercase font-weight-bold'>
-                    Profit/Loss{' '}
+                    {common_strings.profit_loss}{' '}
                     <OverlayTrigger
                       trigger='click'
                       key='profit-loss-overlay'
@@ -93,12 +98,7 @@ class ProfitLossWrapper extends React.Component {
                       overlay={
                         <Popover id='profit-loss-overlay-right'>
                           <Popover.Content>
-                            This section displays the estimated profit/loss for
-                            the list of assets that are currently open to
-                            selling with the last buy price recorded. The
-                            calculation is simply adding profit/loss values for
-                            each quote asset. Note that it does not represent
-                            the historical profit/loss.
+                            {profit_loss_wrapper.profit_loss_description}
                           </Popover.Content>
                         </Popover>
                       }>
@@ -114,6 +114,7 @@ class ProfitLossWrapper extends React.Component {
                       symbols={symbols}
                       setUpdate={this.setUpdate}
                       sendWebSocket={sendWebSocket}
+                      jsonStrings={jsonStrings}
                     />
                   ) : (
                     ''

@@ -1,11 +1,11 @@
 const moment = require('moment');
-const { binance, slack, cache, PubSub } = require('../../../helpers');
+const config = require('config');
+const { binance, cache, PubSub, messenger } = require('../../../helpers');
 const {
   getAPILimit,
   getAndCacheOpenOrdersForSymbol,
   getAccountInfoFromAPI
 } = require('../../trailingTradeHelper/common');
-
 /**
  * Format order params for market total
  *
@@ -15,7 +15,14 @@ const {
  * @param {*} orderParams
  * @returns
  */
-const formatOrderMarketTotal = async (logger, side, symbol, orderParams) => {
+const formatOrderMarketTotal = async (
+  logger,
+  side,
+  symbol,
+  orderParams,
+  precision,
+  currentPrice
+) => {
   logger.info(
     { side, symbol, orderParams },
     'Formatting order for MARKET-TOTAL'
@@ -25,7 +32,7 @@ const formatOrderMarketTotal = async (logger, side, symbol, orderParams) => {
     symbol,
     side,
     type: 'MARKET',
-    quoteOrderQty: orderParams.quoteOrderQty
+    quantity: (orderParams.quantity / currentPrice).toFixed(precision)
   };
 };
 
@@ -48,7 +55,7 @@ const formatOrderMarketAmount = async (logger, side, symbol, orderParams) => {
     symbol,
     side,
     type: 'MARKET',
-    quantity: orderParams.marketQuantity
+    quantity: orderParams.quantity
   };
 };
 
@@ -80,7 +87,7 @@ const formatOrderLimit = async (logger, side, symbol, orderParams) => {
  * @param {*} order
  * @returns
  */
-const formatOrder = async (logger, symbol, order) => {
+const formatOrder = async (logger, symbol, order, precision, currentPrice) => {
   const { side, buy, sell } = order;
 
   if (side === 'buy' && buy.type === 'limit') {
@@ -88,7 +95,14 @@ const formatOrder = async (logger, symbol, order) => {
   }
 
   if (side === 'buy' && buy.type === 'market' && buy.marketType === 'total') {
-    return formatOrderMarketTotal(logger, side, symbol, buy);
+    return formatOrderMarketTotal(
+      logger,
+      side,
+      symbol,
+      buy,
+      precision,
+      currentPrice
+    );
   }
 
   if (side === 'buy' && buy.type === 'market' && buy.marketType === 'amount') {
@@ -104,7 +118,14 @@ const formatOrder = async (logger, symbol, order) => {
     sell.type === 'market' &&
     sell.marketType === 'total'
   ) {
-    return formatOrderMarketTotal(logger, side, symbol, sell);
+    return formatOrderMarketTotal(
+      logger,
+      side,
+      symbol,
+      sell,
+      precision,
+      currentPrice
+    );
   }
 
   if (
@@ -119,7 +140,7 @@ const formatOrder = async (logger, symbol, order) => {
 };
 
 /**
- * Send slack message for order params
+ * Send message for order params
  *
  * @param {*} logger
  * @param {*} symbol
@@ -127,7 +148,7 @@ const formatOrder = async (logger, symbol, order) => {
  * @param {*} order
  * @param {*} params
  */
-const slackMessageOrderParams = async (logger, symbol, side, order, params) => {
+const messageOrderParams = async (logger, symbol, side, order, params) => {
   const { type: rawType, marketType } = order[side];
   let type = rawType.toUpperCase();
 
@@ -135,7 +156,7 @@ const slackMessageOrderParams = async (logger, symbol, side, order, params) => {
     type += ` - ${marketType.toUpperCase()}`;
   }
 
-  return slack.sendMessage(
+  return messenger.errorMessage(
     `${symbol} Manual ${side.toUpperCase()} Action (${moment().format(
       'HH:mm:ss.SSS'
     )}): *${type}*\n` +
@@ -145,7 +166,7 @@ const slackMessageOrderParams = async (logger, symbol, side, order, params) => {
 };
 
 /**
- * Send slack message for order result
+ * Send message for order result
  *
  * @param {*} logger
  * @param {*} symbol
@@ -153,12 +174,13 @@ const slackMessageOrderParams = async (logger, symbol, side, order, params) => {
  * @param {*} order
  * @param {*} orderResult
  */
-const slackMessageOrderResult = async (
+const messageOrderResult = async (
   logger,
   symbol,
   side,
   order,
-  orderResult
+  orderResult,
+  actions
 ) => {
   const { type: rawType, marketType } = order[side];
   let type = rawType.toUpperCase();
@@ -170,11 +192,14 @@ const slackMessageOrderResult = async (
   PubSub.publish('frontend-notification', {
     type: 'success',
     title:
-      `The ${side} order for ${symbol} has been placed successfully.` +
-      ` If the order is not executed, it should appear soon.`
+      actions.notify_order_success[1] +
+      side +
+      actions.notify_order_success[2] +
+      symbol +
+      actions.notify_order_success[3]
   });
 
-  return slack.sendMessage(
+  return messenger.errorMessage(
     `${symbol} Manual ${side.toUpperCase()} Result (${moment().format(
       'HH:mm:ss.SSS'
     )}): *${type}*\n` +
@@ -192,24 +217,17 @@ const slackMessageOrderResult = async (
  *
  * @param {*} logger
  * @param {*} orderResult
- * @param {*} checkManualBuyOrderPeriod
  */
-const recordOrder = async (logger, orderResult, checkManualBuyOrderPeriod) => {
-  const { symbol, side, orderId } = orderResult;
+const recordOrder = async (logger, orderResult) => {
+  const { symbol, side } = orderResult;
 
   if (side === 'BUY') {
     // Save manual buy order
     logger.info({ orderResult }, 'Record buy order');
-    await cache.hset(
-      `trailing-trade-manual-buy-order-${symbol}`,
-      orderId,
-      JSON.stringify({
-        ...orderResult,
-        nextCheck: moment().add(checkManualBuyOrderPeriod, 'seconds')
-      })
-    );
+    await cache.set(`${symbol}-last-buy-order`, JSON.stringify(orderResult));
   } else {
-    logger.info({ orderResult }, 'Do not record order as it is not BUY order');
+    await cache.set(`${symbol}-last-sell-order`, JSON.stringify(orderResult));
+    logger.info({ orderResult }, 'Record sell order');
   }
 };
 
@@ -225,11 +243,11 @@ const execute = async (logger, rawData) => {
     symbol,
     isLocked,
     action,
-    baseAssetBalance,
-    symbolConfiguration: {
-      system: { checkManualBuyOrderPeriod }
+    order,
+    symbolInfo: {
+      filterLotSize: { stepSize }
     },
-    order
+    sell: { lastBuyPrice, lastQtyBought, currentPrice }
   } = data;
 
   if (isLocked) {
@@ -243,19 +261,35 @@ const execute = async (logger, rawData) => {
     );
     return data;
   }
+  const language = config.get('language');
+
+  const {
+    coin_wrapper: { _actions },
+    place_manual_trade
+  } = require(`../../../../public/${language}.json`);
+
+  const precision = parseFloat(stepSize) === 1 ? 0 : stepSize.indexOf(1) - 1;
 
   // Assume order is provided with correct value
-  const orderParams = await formatOrder(logger, symbol, order);
-  slackMessageOrderParams(logger, symbol, order.side, order, {
-    orderParams,
-    baseAssetBalance
-  });
+  const orderParams = await formatOrder(
+    logger,
+    symbol,
+    order,
+    precision,
+    currentPrice
+  );
+  messageOrderParams(logger, symbol, order.side, order, orderParams);
 
   const orderResult = await binance.client.order(orderParams);
 
   logger.info({ orderResult }, 'Order result');
-
-  await recordOrder(logger, orderResult, checkManualBuyOrderPeriod);
+  if (orderResult.side.toLowerCase() === 'sell') {
+    orderResult.finalProfit =
+      currentPrice * lastQtyBought - lastBuyPrice * lastQtyBought;
+    orderResult.finalProfitPercent =
+      (orderResult.finalProfit / (lastBuyPrice * lastQtyBought)) * 100;
+  }
+  await recordOrder(logger, orderResult);
 
   // Get open orders and update cache
   data.openOrders = await getAndCacheOpenOrdersForSymbol(logger, symbol);
@@ -266,10 +300,10 @@ const execute = async (logger, rawData) => {
     o => o.side.toLowerCase() === 'sell'
   );
   // Refresh account info
-  data.accountInfo = await getAccountInfoFromAPI(logger);
+  data.accountInfo = await getAccountInfoFromAPI(logger, true);
 
-  slackMessageOrderResult(logger, symbol, order.side, order, orderResult);
-  data.buy.processMessage = `Placed new manual order.`;
+  messageOrderResult(logger, symbol, order.side, order, orderResult, _actions);
+  data.buy.processMessage = place_manual_trade.action_manual_order;
   data.buy.updatedAt = moment().utc();
 
   return data;

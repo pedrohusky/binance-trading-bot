@@ -1,13 +1,20 @@
 const _ = require('lodash');
 const moment = require('moment');
-const { binance, slack, mongo, cache } = require('../../../helpers');
+const config = require('config');
+const { binance, messenger, cache } = require('../../../helpers');
 const { roundDown } = require('../../trailingTradeHelper/util');
 const {
   getAndCacheOpenOrdersForSymbol,
   getAccountInfoFromAPI,
-  isExceedAPILimit,
-  getAPILimit
+  isExceedAPILimit
 } = require('../../trailingTradeHelper/common');
+
+const retrieveLastBuyOrder = async symbol => {
+  const cachedLastBuyOrder =
+    JSON.parse(await cache.get(`${symbol}-last-buy-order`)) || {};
+
+  return _.isEmpty(cachedLastBuyOrder);
+};
 
 /**
  * Place a buy order if has enough balance
@@ -32,13 +39,22 @@ const execute = async (logger, rawData) => {
       buy: {
         enabled: tradingEnabled,
         maxPurchaseAmount,
+        minPurchaseAmount,
         stopPercentage,
         limitPercentage
-      }
+      },
+      strategyOptions: {
+        huskyOptions: { buySignal }
+      },
+      system: { checkManualBuyOrderPeriod }
     },
     action,
     quoteAssetBalance: { free: quoteAssetFreeBalance },
-    buy: { currentPrice, openOrders }
+    buy: {
+      currentPrice,
+      openOrders,
+      trend: { signedTrendDiff }
+    }
   } = data;
 
   if (isLocked) {
@@ -54,16 +70,27 @@ const execute = async (logger, rawData) => {
     return data;
   }
 
+  const language = config.get('language');
+  const {
+    coin_wrapper: { _actions }
+  } = require(`../../../../public/${language}.json`);
+
+  if (!(await retrieveLastBuyOrder(symbol))) {
+    data.buy.processMessage = 'cant buy, found open order in cache';
+    return data;
+  }
+
   if (openOrders.length > 0) {
-    data.buy.processMessage = `There are open orders for ${symbol}. Do not place an order.`;
+    data.buy.processMessage = `${action.action_open_orders[1] + symbol}.${
+      _actions.action_open_orders[2]
+    }`;
     data.buy.updatedAt = moment().utc();
 
     return data;
   }
 
   if (maxPurchaseAmount <= 0) {
-    data.buy.processMessage =
-      'Max purchase amount must be configured. Please configure symbol settings.';
+    data.buy.processMessage = _actions.action_max_purchase_undefined;
     data.buy.updatedAt = moment().utc();
 
     return data;
@@ -86,8 +113,21 @@ const execute = async (logger, rawData) => {
     logger.info({ freeBalance }, 'Free balance after adjust');
   }
 
+  if (freeBalance < parseFloat(minPurchaseAmount)) {
+    data.buy.processMessage =
+      'Free balance is less than min purchase amount. I will not buy.';
+    data.buy.updatedAt = moment().utc();
+
+    return data;
+  }
+
   if (freeBalance < parseFloat(minNotional)) {
-    data.buy.processMessage = `Do not place a buy order as not enough ${quoteAsset} to buy ${baseAsset}.`;
+    data.buy.processMessage = `${
+      _actions.action_dont_place_order[1] +
+      quoteAsset +
+      _actions.action_dont_place_order[2] +
+      baseAsset
+    }.`;
     data.buy.updatedAt = moment().utc();
 
     return data;
@@ -115,25 +155,40 @@ const execute = async (logger, rawData) => {
 
   if (orderQuantity * limitPrice < parseFloat(minNotional)) {
     data.buy.processMessage =
-      `Do not place a buy order as not enough ${quoteAsset} ` +
-      `to buy ${baseAsset} after calculation.`;
+      _actions.action_dont_place_order_calc[1] +
+      quoteAsset +
+      _actions.action_dont_place_order_calc[2] +
+      baseAsset +
+      _actions.action_dont_place_order_calc[3];
     data.buy.updatedAt = moment().utc();
 
     return data;
   }
 
   if (tradingEnabled !== true) {
-    data.buy.processMessage = `Trading for ${symbol} is disabled. Do not place an order.`;
+    data.buy.processMessage =
+      _actions.action_trading_for_disabled[1] +
+      symbol +
+      _actions.action_trading_for_disabled[2];
     data.buy.updatedAt = moment().utc();
 
     return data;
   }
 
   if (isExceedAPILimit(logger)) {
-    data.buy.processMessage = `Binance API limit has been exceeded. Do not place an order.`;
+    data.buy.processMessage = _actions.action_api_exceed;
     data.buy.updatedAt = moment().utc();
 
     return data;
+  }
+
+  if (buySignal) {
+    if (signedTrendDiff == -1) {
+      data.buy.processMessage = 'Trend is going down, cancelling order';
+      data.buy.updatedAt = moment().utc();
+
+      return data;
+    }
   }
 
   const orderParams = {
@@ -146,17 +201,7 @@ const execute = async (logger, rawData) => {
     timeInForce: 'GTC'
   };
 
-  slack.sendMessage(
-    `${symbol} Buy Action (${moment().format(
-      'HH:mm:ss.SSS'
-    )}): *STOP_LOSS_LIMIT*\n` +
-      `- Order Params: \`\`\`${JSON.stringify(
-        orderParams,
-        undefined,
-        2
-      )}\`\`\`\n` +
-      `- Current API Usage: ${getAPILimit(logger)}`
-  );
+  messenger.sendMessage(symbol, orderParams, 'PLACE_BUY');
 
   logger.info(
     { debug: true, function: 'order', orderParams },
@@ -166,22 +211,6 @@ const execute = async (logger, rawData) => {
 
   logger.info({ orderResult }, 'Order result');
 
-  // Set last buy order to be checked over 2 minutes
-  await cache.set(`${symbol}-last-buy-order`, JSON.stringify(orderResult), 120);
-
-  await mongo.upsertOne(
-    logger,
-    'trailing-trade-symbols',
-    {
-      key: `${symbol}-last-buy-price`
-    },
-    {
-      key: `${symbol}-last-buy-price`,
-      lastBuyPrice: limitPrice,
-      quantity: orderQuantity
-    }
-  );
-
   // Get open orders and update cache
   data.openOrders = await getAndCacheOpenOrdersForSymbol(logger, symbol);
   data.buy.openOrders = data.openOrders.filter(
@@ -189,20 +218,14 @@ const execute = async (logger, rawData) => {
   );
 
   // Refresh account info
-  data.accountInfo = await getAccountInfoFromAPI(logger);
+  data.accountInfo = await getAccountInfoFromAPI(logger, true);
 
-  slack.sendMessage(
-    `${symbol} Buy Action Result (${moment().format(
-      'HH:mm:ss.SSS'
-    )}): *STOP_LOSS_LIMIT*\n` +
-      `- Order Result: \`\`\`${JSON.stringify(
-        orderResult,
-        undefined,
-        2
-      )}\`\`\`\n` +
-      `- Current API Usage: ${getAPILimit(logger)}`
-  );
-  data.buy.processMessage = `Placed new stop loss limit order for buying.`;
+  messenger.sendMessage(symbol, orderResult, 'PLACE_BUY_DONE');
+
+  // Set last buy order to be checked over infinite minutes until callback is received.
+  await cache.set(`${symbol}-last-buy-order`, JSON.stringify(orderResult));
+
+  data.buy.processMessage = _actions.action_placed_new_order;
   data.buy.updatedAt = moment().utc();
 
   // Save last buy price

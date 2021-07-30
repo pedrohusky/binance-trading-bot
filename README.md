@@ -14,7 +14,33 @@
 [![ko](https://img.shields.io/badge/lang-한국어-brightgreen.svg)](https://github.com/chrisleekr/binance-trading-bot/blob/master/README.ko.md)
 [![中文](https://img.shields.io/badge/lang-中文-blue.svg)](https://github.com/chrisleekr/binance-trading-bot/blob/master/README.zh-cn.md)
 
-This is a test project. I am just testing my code.
+This is my fork of Binance Trading Bot. I am just enhancing Chrisleek code.
+
+## Latest Changes
+
+- **Multilanguage: Bot now supports EN, ES, PT, VI, NL, CH as frontend languages. You can change them on-the-fly by setting the desired language in global configuration.**
+
+- **Grid strategy: Now bots support buying multiple times the same coin, always averaging the price. You can define and threshold to activate, and you can enable/disable it trough global settings.**
+
+- **Theming: Bot now supports dark/light theme, with just a click of a button on the top of the page. More themes is coming later.**
+
+- **Notifiers: Bot now supports Telegram to send you messages. Currently telegram languages support are EN, PT, VI. More coming soon. You can enable/disable telegram/slack trough global configuration. NOTE: You will still need to setup their keys in .env file.**
+
+- **Search box: Now you can filter your symbols by simply searching them by name.** :)
+
+- **Reset to factory settings: You can now reset bot configuration to original fabric settings. You can choose to reset and keep your current monitored symbols. After a reset, every cache/database related to them is deleted to make the reset a fresh start.**
+
+- **Global Settings / Symbol Setting rework: Now the variable boxes is a little more informative. Their appearance is enhanced.**
+
+- **STAKING: Bot can now stake some coins! It will sell your profit percentage as less amount (if 0,5% profit, it will sell 99,5% of he amount).**
+
+- **NEW INDICATOR!! I've created a new indicator that I call it "Husky Indicator". It is used to know wether the symbol trend is down or up. If is down, don't buy. Is is going up, don't sell. With that logic: Your profits will be higher than your sell trigger defined percentage. And the bot will receive an ability to BUY at the LOWER price AFTER a dip, not buy in a dip. The indicator precision is good. NOTE: The indicator does not increase API LIMIT.** :)
+
+- **Strategy Options: There's a new field called Strategy options that you can control some options related to it (Stake coins, grid strategy, husky indicator options).**
+
+- **BACKTEST: I'm having a problem downloading the zip, extracting it and reading the .CSV file. When I fix this, it will be available to you all.**
+
+- **Faster: I tried to make the bot faster by decreasing the log file size and enabling the symbols to be monitored more (The lock time was 20s, i changed it to 3-10 depending on what action bot is doing). This will change in the future as API usage is increasing. Please let me know if you receive any warnings.**
 
 ## Warnings
 
@@ -41,7 +67,7 @@ This bot is using the concept of trailing buy/sell order which allows following 
 - The bot can monitor multiple symbols. All symbols will be monitored per second.
 - The bot is using MongoDB to provide a persistence database. However, it does not use the latest MongoDB to support Raspberry Pi 32bit. Used MongoDB version
   is 3.2.20, which is provided by [apcheamitru](https://hub.docker.com/r/apcheamitru/arm32v7-mongo).
-- The bot is tested/working with Linux and Raspberry Pi 4 32bit. Other platforms are not tested.
+- The bot is tested/working with Linux and Raspberry Pi 3b+/4 32bit. Other platforms are not tested.
 
 #### Buy Signal
 
@@ -242,11 +268,18 @@ Or use the frontend to adjust configurations after launching the application.
    docker-compose -f docker-compose.server.yml up -d
    ```
 
-   Or if using Raspberry Pi 4 32bit, must build again for Raspberry Pi:
+   Or if using Raspberry Pi 3b+/4 **32bit**, must build again for Raspberry Pi:
 
    ```bash
    npm run docker:build
    docker-compose -f docker-compose.rpi.yml up -d
+   ```
+
+   Or if using Raspberry Pi 4 **64bit**, must build again for Raspberry Pi:
+
+   ```bash
+   npm run docker:build
+   docker-compose -f docker-compose.rpi64.yml up -d
    ```
 
    Or if want development/test mode, then run below commands:

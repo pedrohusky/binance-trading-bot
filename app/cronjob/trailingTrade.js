@@ -1,4 +1,3 @@
-const moment = require('moment');
 const config = require('config');
 const {
   getGlobalConfiguration
@@ -10,7 +9,7 @@ const {
   lockSymbol,
   isSymbolLocked,
   unlockSymbol,
-  getAPILimit
+  isExceedAPILimit
 } = require('./trailingTradeHelper/common');
 
 const {
@@ -24,7 +23,7 @@ const {
   getIndicators,
   handleOpenOrders,
   determineAction,
-  placeManualTrade,
+  place_manual_trade,
   placeBuyOrder,
   placeSellOrder,
   placeSellStopLossOrder,
@@ -32,10 +31,16 @@ const {
   saveDataToCache,
   cancelOrder
 } = require('./trailingTrade/steps');
-const { slack } = require('../helpers');
+const {
+  updateTelegramBotTrailingTradeData,
+  manageError
+} = require('../helpers/telegram');
 
 const execute = async logger => {
   try {
+    if (isExceedAPILimit(logger)) {
+      return;
+    }
     // Retrieve global configuration
     const globalConfiguration = await getGlobalConfiguration(logger);
 
@@ -62,7 +67,7 @@ const execute = async logger => {
           await lockSymbol(logger, symbol);
         }
 
-        // Define sekeleton of data structure
+        // Define skeleton of data structure
         let data = {
           symbol,
           isLocked,
@@ -131,7 +136,7 @@ const execute = async logger => {
           },
           {
             stepName: 'place-manual-order',
-            stepFunc: placeManualTrade
+            stepFunc: place_manual_trade
           },
           {
             stepName: 'cancel-order',
@@ -183,6 +188,8 @@ const execute = async logger => {
           '⏹ TrailingTrade: Finish process (Debug)...'
         );
 
+        await updateTelegramBotTrailingTradeData(data);
+
         logger.info({ symbol, data }, 'TrailingTrade: Finish process...');
       })
     );
@@ -196,17 +203,14 @@ const execute = async logger => {
       err.code === -1021 || // Timestamp for this request is outside of the recvWindow
       err.code === 'ECONNRESET' ||
       err.code === 'ECONNREFUSED' ||
-      err.message.includes('redlock') // For the redlock fail
+      err.code === 'ETIMEDOUT' ||
+      err.message.includes('redlock') || // For the redlock fail
+      err.message.includes('signedTrendDiff')
     ) {
       // Let's silent for internal server error or assumed temporary errors
     } else {
-      slack.sendMessage(
-        `Execution failed (${moment().format('HH:mm:ss.SSS')})\n` +
-          `Job: Trailing Trade\n` +
-          `Code: ${err.code}\n` +
-          `Message:\`\`\`${err.message}\`\`\`\n` +
-          `Stack:\`\`\`${err.stack}\`\`\`\n` +
-          `- Current API Usage: ${getAPILimit(logger)}`
+      manageError(
+        `Code: ${err.code}\n Error message: ${err.message}\n Job: Trailing Trade\n`
       );
     }
   }

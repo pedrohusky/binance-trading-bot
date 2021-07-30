@@ -36,6 +36,16 @@
     "channel": "BINANCE_SLACK_CHANNEL",
     "username": "BINANCE_SLACK_USERNAME"
   },
+  "telegram": {
+    "enabled": {
+      "__name": "BINANCE_TELEGRAM_ENABLED",
+      "__format": "boolean"
+    },
+    "chatid": "BINANCE_TELEGRAM_CHATID",
+    "token": "BINANCE_TELEGRAM_TOKEN"
+  },
+  "language": "LANGUAGE",
+  "password": "PASSWORD",
   "localTunnel": {
     "enabled": {
       "__name": "BINANCE_LOCAL_TUNNEL_ENABLED",
@@ -66,6 +76,7 @@
       "balanceSymbols": "BINANCE_JOBS_ALIVE_BALANCE_SYMBOLS"
     },
     "trailingTrade": {
+      "language": "LANGUAGE",
       "enabled": {
         "__name": "BINANCE_JOBS_TRAILING_TRADE_ENABLED",
         "__format": "boolean"
@@ -80,6 +91,36 @@
         "limit": {
           "__name": "BINANCE_JOBS_TRAILING_TRADE_CANDLES_LIMIT",
           "__format": "number"
+        }
+      },
+      "strategyOptions": {
+        "tradeOptions": {
+          "manyBuys": {
+            "__name": "BINANCE_JOBS_TRAILING_TRADE_MANY_BUYS",
+            "__format": "boolean"
+          },
+          "differenceToBuy": {
+            "__name": "BINANCE_JOBS_TRAILING_TRADE_DIFFERENCE_TO_BUY",
+            "__format": "number"
+          }
+        },
+        "huskyOptions": {
+          "buySignal": {
+            "__name": "BINANCE_JOBS_TRAILING_TRADE_BUY_SIGNAL",
+            "__format": "boolean"
+          },
+          "sellSignal": {
+            "__name": "BINANCE_JOBS_TRAILING_TRADE_SELL_SIGNAL",
+            "__format": "boolean"
+          },
+          "positive": {
+            "__name": "BINANCE_JOBS_TRAILING_TRADE_POSITIVE",
+            "__format": "number"
+          },
+          "negative": {
+            "__name": "BINANCE_JOBS_TRAILING_TRADE_NEGATIVE",
+            "__format": "number"
+          }
         }
       },
       "buy": {
@@ -122,8 +163,20 @@
           "__name": "BINANCE_JOBS_TRAILING_TRADE_SELL_ENABLED",
           "__format": "boolean"
         },
+        "trendDownMarketSell": {
+          "__name": "BINANCE_JOBS_TRAILING_TRADE_SELL_ENABLED_ON_DOWNTREND",
+          "__format": "boolean"
+        },
+        "stakeCoinEnabled": {
+          "__name": "BINANCE_JOBS_TRAILING_TRADE_STAKE_COINS",
+          "__format": "boolean"
+        },
         "triggerPercentage": {
           "__name": "BINANCE_JOBS_TRAILING_TRADE_SELL_TRIGGER_PERCENTAGE",
+          "__format": "number"
+        },
+        "hardTriggerPercentage": {
+          "__name": "BINANCE_JOBS_TRAILING_TRADE_HARD_SELL_TRIGGER_PERCENTAGE",
           "__format": "number"
         },
         "stopPercentage": {

@@ -1,12 +1,12 @@
 const _ = require('lodash');
 const moment = require('moment');
-const { binance, cache, slack } = require('../../../helpers');
+const config = require('config');
+const { binance, cache, messenger } = require('../../../helpers');
 const { roundDown } = require('../../trailingTradeHelper/util');
 const {
   getAndCacheOpenOrdersForSymbol,
   getAccountInfoFromAPI,
-  isExceedAPILimit,
-  getAPILimit
+  isExceedAPILimit
 } = require('../../trailingTradeHelper/common');
 
 /**
@@ -27,11 +27,23 @@ const execute = async (logger, rawData) => {
       filterMinNotional: { minNotional }
     },
     symbolConfiguration: {
-      sell: { enabled: tradingEnabled, stopPercentage, limitPercentage }
+      sell: {
+        enabled: tradingEnabled,
+        stopPercentage,
+        limitPercentage,
+        triggerPercentage,
+        stakeCoinEnabled
+      },
+      strategyOptions: {
+        huskyOptions: { sellSignal }
+      }
     },
     action,
-    baseAssetBalance: { free: baseAssetFreeBalance },
-    sell: { currentPrice, openOrders }
+    sell: { currentPrice, openOrders, lastQtyBought, lastBuyPrice },
+    buy: {
+      trend: { signedTrendDiff }
+    },
+    baseAssetBalance: { free: freeAssetBalance }
   } = data;
 
   if (isLocked) {
@@ -47,8 +59,15 @@ const execute = async (logger, rawData) => {
     return data;
   }
 
+  const language = config.get('language');
+  const {
+    coin_wrapper: { _actions }
+  } = require(`../../../../public/${language}.json`);
+
   if (openOrders.length > 0) {
-    data.sell.processMessage = `There are open orders for ${symbol}. Do not place an order.`;
+    data.sell.processMessage = `${action.action_open_orders[1] + symbol}.${
+      _actions.action_open_orders[2]
+    }`;
     data.sell.updatedAt = moment().utc();
 
     return data;
@@ -61,8 +80,14 @@ const execute = async (logger, rawData) => {
   const stopPrice = roundDown(currentPrice * stopPercentage, pricePrecision);
   const limitPrice = roundDown(currentPrice * limitPercentage, pricePrecision);
 
-  const freeBalance = parseFloat(_.floor(baseAssetFreeBalance, lotPrecision));
-  logger.info({ freeBalance }, 'Free balance');
+  let freeBalance;
+  if (stakeCoinEnabled) {
+    freeBalance = parseFloat(_.floor(lastQtyBought, lotPrecision));
+    logger.info({ freeBalance }, 'Free balance');
+  } else {
+    freeBalance = parseFloat(_.floor(freeAssetBalance, lotPrecision));
+    logger.info({ freeBalance }, 'Free balance');
+  }
 
   let orderQuantity = parseFloat(
     _.floor(freeBalance - freeBalance * (0.1 / 100), lotPrecision)
@@ -70,8 +95,9 @@ const execute = async (logger, rawData) => {
 
   if (orderQuantity <= parseFloat(minQty)) {
     data.sell.processMessage =
-      `Order quantity is less or equal than the minimum quantity - ${minQty}. ` +
-      `Do not place an order.`;
+      _actions.action_order_minimum_qty[1] +
+      minQty +
+      _actions.action_order_minimum_qty[2];
     data.sell.updatedAt = moment().utc();
 
     return data;
@@ -81,24 +107,49 @@ const execute = async (logger, rawData) => {
   }
 
   if (orderQuantity * limitPrice < parseFloat(minNotional)) {
-    data.sell.processMessage = `Notional value is less than the minimum notional value. Do not place an order.`;
+    data.sell.processMessage = _actions.action_less_than_nominal;
     data.sell.updatedAt = moment().utc();
 
     return data;
   }
 
   if (tradingEnabled !== true) {
-    data.sell.processMessage = `Trading for ${symbol} is disabled. Do not place an order.`;
+    data.buy.processMessage =
+      _actions.action_trading_for_disabled[1] +
+      symbol +
+      _actions.action_trading_for_disabled[2];
     data.sell.updatedAt = moment().utc();
 
     return data;
   }
 
   if (isExceedAPILimit(logger)) {
-    data.sell.processMessage = `Binance API limit has been exceeded. Do not place an order.`;
+    data.buy.processMessage = _actions.action_api_exceed;
     data.sell.updatedAt = moment().utc();
 
     return data;
+  }
+
+  if (sellSignal) {
+    if (signedTrendDiff === 1) {
+      data.buy.processMessage = 'Trend is going up, cancelling order';
+      data.buy.updatedAt = moment().utc();
+
+      return data;
+    }
+  }
+
+  if (stakeCoinEnabled) {
+    const reduceSellTrigger = triggerPercentage * 100 - 100;
+    const amountOfProfitToReduceToStake =
+      (orderQuantity / 100) * reduceSellTrigger;
+    const calculatedOrderQuantity = parseFloat(
+      _.floor(orderQuantity - amountOfProfitToReduceToStake, lotPrecision)
+    );
+
+    if (calculatedOrderQuantity * currentPrice > parseFloat(minNotional)) {
+      orderQuantity = calculatedOrderQuantity;
+    }
   }
 
   const orderParams = {
@@ -111,14 +162,7 @@ const execute = async (logger, rawData) => {
     timeInForce: 'GTC'
   };
 
-  slack.sendMessage(
-    `${symbol} Sell Action (${moment().format(
-      'HH:mm:ss.SSS'
-    )}): *STOP_LOSS_LIMIT*\n` +
-      `- Order Params: \`\`\`${JSON.stringify(orderParams, undefined, 2)}\`\`\`
-      \n` +
-      `- Current API Usage: ${getAPILimit(logger)}`
-  );
+  messenger.sendMessage(symbol, orderParams, 'PLACE_SELL');
 
   logger.info(
     { debug: true, function: 'order', orderParams },
@@ -128,7 +172,12 @@ const execute = async (logger, rawData) => {
 
   logger.info({ orderResult }, 'Order result');
 
-  await cache.set(`${symbol}-last-sell-order`, JSON.stringify(orderResult), 15);
+  orderResult.finalProfit =
+    currentPrice * lastQtyBought - lastBuyPrice * lastQtyBought;
+  orderResult.finalProfitPercent =
+    (orderResult.finalProfit / (lastBuyPrice * lastQtyBought)) * 100;
+
+  await cache.set(`${symbol}-last-sell-order`, JSON.stringify(orderResult));
 
   // Get open orders and update cache
   data.openOrders = await getAndCacheOpenOrdersForSymbol(logger, symbol);
@@ -137,20 +186,10 @@ const execute = async (logger, rawData) => {
   );
 
   // Refresh account info
-  data.accountInfo = await getAccountInfoFromAPI(logger);
+  data.accountInfo = await getAccountInfoFromAPI(logger, true);
 
-  slack.sendMessage(
-    `${symbol} Sell Action Result (${moment().format(
-      'HH:mm:ss.SSS'
-    )}): *STOP_LOSS_LIMIT*\n` +
-      `- Order Result: \`\`\`${JSON.stringify(
-        orderResult,
-        undefined,
-        2
-      )}\`\`\`\n` +
-      `- Current API Usage: ${getAPILimit(logger)}`
-  );
-  data.sell.processMessage = `Placed new stop loss limit order for selling.`;
+  messenger.sendMessage(symbol, orderResult, 'PLACE_SELL_DONE');
+  data.buy.processMessage = _actions.action_placed_new_sell_order;
   data.sell.updatedAt = moment().utc();
 
   return data;

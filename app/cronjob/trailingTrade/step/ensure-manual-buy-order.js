@@ -1,7 +1,8 @@
 /* eslint-disable no-await-in-loop */
 const moment = require('moment');
 const _ = require('lodash');
-const { cache, PubSub, binance, slack } = require('../../../helpers');
+const config = require('config');
+const { cache, PubSub, binance, messenger } = require('../../../helpers');
 const {
   getLastBuyPrice,
   saveLastBuyPrice,
@@ -126,12 +127,24 @@ const slackMessageOrderDeleted = async (
 ) => {
   const type = orderParams.type.toUpperCase();
 
+  const language = config.get('language');
+  const {
+    coin_wrapper: { _actions }
+  } = require(`../../../../public/${language}.json`);
+
   PubSub.publish('frontend-notification', {
     type: 'success',
-    title: `The ${side} order for ${symbol} is ${orderResult.status}. Stop monitoring.`
+    title:
+      _actions.action_stop_monitoring[1] +
+      side +
+      _actions.action_stop_monitoring[2] +
+      symbol +
+      _actions.action_stop_monitoring[3] +
+      orderResult.status +
+      _actions.action_stop_monitoring[4]
   });
 
-  return slack.sendMessage(
+  return messenger.errorMessage(
     `${symbol} Manual ${side.toUpperCase()} Order Removed (${moment().format(
       'HH:mm:ss.SSS'
     )}): *${type}*\n` +
@@ -159,6 +172,8 @@ const execute = async (logger, rawData) => {
       system: { checkManualBuyOrderPeriod }
     }
   } = data;
+
+  return data;
 
   const manualBuyOrders = await cache.hgetall(
     `trailing-trade-manual-buy-order-${symbol}`
@@ -231,7 +246,7 @@ const execute = async (logger, rawData) => {
           return data;
         }
 
-        // If filled, then calculate average cost and quantity and save new last buy pirce.
+        // If filled, then calculate average cost and quantity and save new last buy price.
         if (orderResult.status === 'FILLED') {
           logger.info(
             { buyOrder },

@@ -133,8 +133,8 @@ describe('setting-update.test.js', () => {
           },
           buy: {
             enabled: true,
-            maxPurchaseAmount: -1,
-            lastBuyPriceRemoveThreshold: -1
+            lastBuyPriceRemoveThreshold: -1,
+            maxPurchaseAmount: -1
           },
           sell: {
             enabled: true,
@@ -202,7 +202,7 @@ describe('setting-update.test.js', () => {
           buy: {
             enabled: true,
             maxPurchaseAmount: 100,
-            lastBuyPriceRemoveThreshold: 10
+            lastBuyPriceRemoveThreshold: 10,
           },
           sell: {
             enabled: true,
@@ -227,8 +227,7 @@ describe('setting-update.test.js', () => {
             },
             buy: {
               enabled: true,
-              maxPurchaseAmount: 150,
-              lastBuyPriceRemoveThreshold: 10
+              maxPurchaseAmount: 150
             },
             sell: {
               enabled: true,
@@ -255,7 +254,7 @@ describe('setting-update.test.js', () => {
           buy: {
             enabled: true,
             maxPurchaseAmount: -1,
-            lastBuyPriceRemoveThreshold: -1
+            lastBuyPriceRemoveThreshold: -1,
           },
           sell: {
             enabled: true,

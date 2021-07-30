@@ -53,7 +53,11 @@ class SymbolDeleteIcon extends React.Component {
 
   render() {
     if (this.canDelete()) {
-      const { symbolInfo } = this.props;
+      const { symbolInfo, jsonStrings } = this.props;
+      if (_.isEmpty(jsonStrings)) {
+        return '';
+      }
+      const { symbol_delete, common_strings } = jsonStrings;
       return (
         <div className='header-column-icon-wrapper symbol-delete-wrapper'>
           <button
@@ -65,28 +69,28 @@ class SymbolDeleteIcon extends React.Component {
 
           <Modal show={this.state.showModal} onHide={this.handleModalClose}>
             <Modal.Header className='pt-1 pb-1'>
-              <Modal.Title>Remove Symbol - {symbolInfo.symbol}</Modal.Title>
+              <Modal.Title>{symbol_delete.remove_symbol} - {symbolInfo.symbol}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              Are you sure to remove this symbol from the cache?
+              {symbol_delete._description[1]}
               <br />
-              Note that it is simply removing cache values for the symbol.
+              {symbol_delete._description[2]}
               <br />
-              If the symbol is still monitoring, then it will show up again.
+              {symbol_delete._description[3]}
             </Modal.Body>
             <Modal.Footer>
               <Button
                 variant='secondary'
                 size='sm'
                 onClick={this.handleModalClose}>
-                Close
+                {common_strings._close}
               </Button>
               <Button
                 type='button'
                 variant='danger'
                 size='sm'
                 onClick={this.handleDelete}>
-                Remove
+                {common_strings._remove}
               </Button>
             </Modal.Footer>
           </Modal>

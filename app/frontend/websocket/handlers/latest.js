@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const config = require('config');
 const { version } = require('../../../../package.json');
 
 const { binance, cache } = require('../../../helpers');
@@ -35,8 +36,31 @@ const handleLatest = async (logger, ws, _payload) => {
   const globalConfiguration = await getGlobalConfiguration(logger);
   logger.info({ globalConfiguration }, 'Configuration from MongoDB');
 
+  let savedPassword = config.get('password');
+
+  if (savedPassword === undefined || savedPassword === null) {
+    savedPassword = '';
+  }
+
+  const {
+    botOptions: { login }
+  } = globalConfiguration;
+
+  const cachedTrades = JSON.parse(await cache.get(`past-trades`)) || {};
+
+  if (savedPassword === '') {
+    login.passwordActivated = false;
+  } else {
+    login.passwordActivated = true;
+  }
+
+  const cachedTempLogin = JSON.parse(await cache.get(`tempLogin`)) || {};
+
   let common = {};
   try {
+    if (globalConfiguration.language !== config.get('language')) {
+      globalConfiguration.language = config.get('language');
+    }
     common = {
       version,
       gitHash: process.env.GIT_HASH || 'unspecified',
@@ -44,7 +68,10 @@ const handleLatest = async (logger, ws, _payload) => {
       accountInfo: JSON.parse(cacheTrailingTradeCommon['account-info']),
       exchangeSymbols: JSON.parse(cacheTrailingTradeCommon['exchange-symbols']),
       publicURL: cacheTrailingTradeCommon['local-tunnel-url'],
-      apiInfo: binance.client.getInfo()
+      apiInfo: binance.client.getInfo(),
+      passwordActivated: login.passwordActivated,
+      login: cachedTempLogin,
+      pastTrades: cachedTrades
     };
   } catch (e) {
     logger.error({ e }, 'Something wrong with trailing-trade-common cache');

@@ -10,16 +10,30 @@ class CoinWrapperBuySignal extends React.Component {
         },
         symbolConfiguration,
         buy
-      }
+      },
+      jsonStrings: { coin_wrapper, common_strings }
     } = this.props;
 
     const precision = parseFloat(tickSize) === 1 ? 0 : tickSize.indexOf(1) - 1;
+    let predictionHigherThan = 0;
+    if (buy.prediction !== undefined) {
+      predictionHigherThan = (
+        100 -
+        (parseFloat(buy.currentPrice) /
+          parseFloat(
+            buy.prediction.predictedValue[
+              buy.prediction.predictedValue.length - 1
+            ]
+          )) *
+          100
+      ).toFixed(2);
+    }
 
     return (
       <div className='coin-info-sub-wrapper'>
         <div className='coin-info-column coin-info-column-title'>
           <div className='coin-info-label'>
-            Buy Signal ({symbolConfiguration.candles.interval}/
+            {coin_wrapper.buy_signal} ({symbolConfiguration.candles.interval}/
             {symbolConfiguration.candles.limit}){' '}
             <span className='coin-info-value'>
               {symbolConfiguration.buy.enabled ? (
@@ -31,20 +45,90 @@ class CoinWrapperBuySignal extends React.Component {
           </div>
           {symbolConfiguration.buy.enabled === false ? (
             <HightlightChange className='coin-info-message text-muted'>
-              Trading is disabled.
+              {common_strings.trading_disabled}.
             </HightlightChange>
           ) : (
             ''
           )}
         </div>
-        {symbolConfiguration.buy.athRestriction.enabled ? (
+
+        {symbolConfiguration.strategyOptions.huskyOptions.buySignal &&
+        _.isEmpty(buy.trend) === false ? (
+          <div className='coin-info-column coin-info-column-right coin-info-column-balance'>
+            <span className='coin-info-label'>
+              {common_strings._trending} Husky:
+            </span>
+            {!_.isEmpty(buy.trend) ? (
+              <HightlightChange className='coin-info-value'>
+                {buy.trend.status} - {common_strings._strength}:{' '}
+                {buy.trend.trendDiff}%
+              </HightlightChange>
+            ) : (
+              'Not enough data, wait.'
+            )}
+          </div>
+        ) : (
+          ''
+        )}
+
+        {symbolConfiguration.buy.predictValue === true &&
+        buy.prediction !== undefined ? (
+          <div className='coin-info-column coin-info-column-right coin-info-column-balance'>
+            <span className='coin-info-label'>
+              Predict next {buy.prediction.interval}:
+            </span>
+            <HightlightChange className='coin-info-value coin-predict'>
+              {parseFloat(
+                buy.prediction.predictedValue[
+                  buy.prediction.predictedValue.length - 1
+                ]
+              ).toFixed(precision)}
+            </HightlightChange>
+            <HightlightChange className='coin-info-value coin-predict'>
+              (
+              {Math.sign(
+                parseFloat(
+                  buy.prediction.predictedValue[
+                    buy.prediction.predictedValue.length - 1
+                  ]
+                ).toFixed(precision) - buy.currentPrice
+              ) === 1
+                ? 'above)'
+                : 'below)'}
+            </HightlightChange>
+          </div>
+        ) : (
+          ''
+        )}
+
+        {symbolConfiguration.buy.predictValue === true &&
+        buy.prediction !== undefined ? (
+          <div className='coin-info-column coin-info-column-right coin-info-column-balance'>
+            <span className='coin-info-label'>Prediction error:</span>
+            <HightlightChange className='coin-info-value coin-predict'>
+              {predictionHigherThan}%
+            </HightlightChange>
+          </div>
+        ) : (
+          ''
+        )}
+
+        {symbolConfiguration.strategyOptions.athRestriction.enabled ? (
           <div className='d-flex flex-column w-100'>
             {buy.athPrice ? (
               <div className='coin-info-column coin-info-column-price'>
                 <span className='coin-info-label'>
                   ATH price (
-                  {symbolConfiguration.buy.athRestriction.candles.interval}/
-                  {symbolConfiguration.buy.athRestriction.candles.limit}):
+                  {
+                    symbolConfiguration.strategyOptions.athRestriction.candles
+                      .interval
+                  }
+                  /
+                  {
+                    symbolConfiguration.strategyOptions.athRestriction.candles
+                      .limit
+                  }
+                  ):
                 </span>
                 <HightlightChange className='coin-info-value'>
                   {parseFloat(buy.athPrice).toFixed(precision)}
@@ -62,7 +146,7 @@ class CoinWrapperBuySignal extends React.Component {
                     &#62; Restricted price (
                     {(
                       parseFloat(
-                        symbolConfiguration.buy.athRestriction
+                        symbolConfiguration.strategyOptions.athRestriction
                           .restrictionPercentage - 1
                       ) * 100
                     ).toFixed(2)}
@@ -108,7 +192,9 @@ class CoinWrapperBuySignal extends React.Component {
 
         {buy.highestPrice ? (
           <div className='coin-info-column coin-info-column-price'>
-            <span className='coin-info-label'>Highest price:</span>
+            <span className='coin-info-label'>
+              {coin_wrapper.highest_price}:
+            </span>
             <HightlightChange className='coin-info-value'>
               {parseFloat(buy.highestPrice).toFixed(precision)}
             </HightlightChange>
@@ -118,7 +204,9 @@ class CoinWrapperBuySignal extends React.Component {
         )}
         {buy.currentPrice ? (
           <div className='coin-info-column coin-info-column-price'>
-            <span className='coin-info-label'>Current price:</span>
+            <span className='coin-info-label'>
+              {common_strings.current_price}:
+            </span>
             <HightlightChange className='coin-info-value'>
               {parseFloat(buy.currentPrice).toFixed(precision)}
             </HightlightChange>
@@ -128,7 +216,9 @@ class CoinWrapperBuySignal extends React.Component {
         )}
         {buy.lowestPrice ? (
           <div className='coin-info-column coin-info-column-lowest-price'>
-            <span className='coin-info-label'>Lowest price:</span>
+            <span className='coin-info-label'>
+              {coin_wrapper.lowest_price}:
+            </span>
             <HightlightChange className='coin-info-value'>
               {parseFloat(buy.lowestPrice).toFixed(precision)}
             </HightlightChange>
@@ -136,20 +226,21 @@ class CoinWrapperBuySignal extends React.Component {
         ) : (
           ''
         )}
+        <div className='coin-info-column coin-info-column-price divider'></div>
         {buy.triggerPrice ? (
           <div className='coin-info-column coin-info-column-price'>
             <div
               className='coin-info-label d-flex flex-row justify-content-start'
               style={{ flex: '0 100%' }}>
               <span>
-                &#62; Trigger price (
+                {coin_wrapper.trigger_price} (
                 {(
                   parseFloat(symbolConfiguration.buy.triggerPercentage - 1) *
                   100
                 ).toFixed(2)}
                 %):
               </span>
-              {symbolConfiguration.buy.athRestriction.enabled &&
+              {symbolConfiguration.strategyOptions.athRestriction.enabled &&
               parseFloat(buy.triggerPrice) >
                 parseFloat(buy.athRestrictionPrice) ? (
                 <OverlayTrigger
@@ -194,7 +285,7 @@ class CoinWrapperBuySignal extends React.Component {
         )}
         {buy.difference ? (
           <div className='coin-info-column coin-info-column-price'>
-            <span className='coin-info-label'>Difference to buy:</span>
+            <span className='coin-info-label'>{coin_wrapper.diff_buy}:</span>
             <HightlightChange className='coin-info-value' id='buy-difference'>
               {parseFloat(buy.difference).toFixed(2)}%
             </HightlightChange>

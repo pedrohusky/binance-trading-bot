@@ -1,5 +1,6 @@
 const moment = require('moment');
-const { binance, slack, cache, PubSub } = require('../../../helpers');
+const config = require('config');
+const { binance, messenger, cache, PubSub } = require('../../../helpers');
 const {
   getAPILimit,
   getAndCacheOpenOrdersForSymbol,
@@ -34,11 +35,10 @@ const execute = async (logger, rawData) => {
     orderId: order.orderId
   };
 
-  slack.sendMessage(
-    `${symbol} Cancel Action (${moment().format('HH:mm:ss.SSS')}): \n` +
-      `- Order: \`\`\`${JSON.stringify(order, undefined, 2)}\`\`\`\n` +
-      `- Current API Usage: ${getAPILimit(logger)}`
-  );
+  const language = config.get('language');
+  const {
+    coin_wrapper: { _actions }
+  } = require(`../../../../public/${language}.json`);
 
   logger.info(
     { debug: true, function: 'order', orderParams },
@@ -51,8 +51,12 @@ const execute = async (logger, rawData) => {
 
   await cache.hdel(`trailing-trade-manual-buy-order-${symbol}`, order.orderId);
 
+  messenger.errorMessage(
+    `Order cancelled, result: ${JSON.stringify(orderResult)}`
+  );
+
   // Get open orders and update cache
-  data.openOrders = await getAndCacheOpenOrdersForSymbol(logger, symbol);
+  data.openOrder = await getAndCacheOpenOrdersForSymbol(logger, symbol);
   data.buy.openOrders = data.openOrders.filter(
     o => o.side.toLowerCase() === 'buy'
   );
@@ -66,21 +70,26 @@ const execute = async (logger, rawData) => {
   PubSub.publish('frontend-notification', {
     type: 'success',
     title:
-      `The order for ${symbol} has been cancelled successfully.` +
-      ` If the order still display, it should be removed soon.`
+      _actions.action_cancel_success[1] +
+      symbol +
+      _actions.action_cancel_success[2]
   });
 
-  slack.sendMessage(
-    `${symbol} Cancel Action Result (${moment().format('HH:mm:ss.SSS')}):\n` +
-      `- Order Result: \`\`\`${JSON.stringify(
-        orderResult,
-        undefined,
-        2
-      )}\`\`\`\n` +
-      `- Current API Usage: ${getAPILimit(logger)}`
-  );
+  messenger.sendMessage(symbol, orderResult, 'ORDER_CANCELED');
 
-  data.buy.processMessage = `The order has been cancelled.`;
+  const cachedLastBuyOrder =
+    JSON.parse(await cache.hget(`${symbol}-last-buy-order`)) || {};
+  if (!_.isEmpty(cachedLastBuyOrder)) {
+    await cache.hdel(`${symbol}-last-buy-order`);
+  }
+
+  const cachedLastSellOrder =
+    JSON.parse(await cache.get(`${symbol}-last-sell-order`)) || {};
+  if (!_.isEmpty(cachedLastSellOrder)) {
+    await cache.del(`${symbol}-last-sell-order`);
+  }
+
+  data.buy.processMessage = _actions.order_cancelled;
   data.buy.updatedAt = moment().utc();
 
   return data;

@@ -1,16 +1,46 @@
 /* Dark Mode styles */
-body {
-  overflow-y: scroll; /* Show vertical scrollbar */
+
+.theme-light {
+  --color-primary: #ebebeb;
+  --color-card: #e0e0e0;
+  --color-token: #cccccc;
+  --font-secondary-color: #2c2c2c;
+  --font-link: #135081;
+  --font-main-color: #333333;
+  --green: #d8e0d6;
+  --red: #ddd0d0;
+}
+.theme-dark {
+  --color-primary: #191f2c;
+  --color-card: #283041;
+  --color-token: #3a4763;
+  --font-secondary-color: #d1c975;
+  --font-link: #00a1e0;
+  --font-main-color: #cfcfcf;
+  --green: #28413f;
+  --red: #3a2727;
 }
 
-body.dark-theme {
-  color: #cfcfcf;
-  background: #191f2c;
+body {
   font-size: 0.8rem;
+  color: var(--font-main-color);
+  background: var(--color-primary);
+  transition: all 0.5s ease-in-out;
 }
 
 .divider {
   border-top: 1px dashed #585858;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.body::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.body {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 /* Disable scrolling */
@@ -68,7 +98,7 @@ input[type='number'] {
 }
 
 .app {
-  padding: 10px;
+  padding: 5px;
 }
 
 .app-body-loading {
@@ -84,11 +114,13 @@ input[type='number'] {
 
 .app-h1 .binance-img {
   width: 17px;
+  height: 17px;
   vertical-align: text-top;
 }
 
 .app-h1 i {
-  color: #fff;
+  color: var(--font-main-color);
+  transition: color 0.5s ease-in-out;
 }
 
 .app-header {
@@ -119,7 +151,8 @@ input[type='number'] {
 }
 
 .header-wrapper .header-column.header-column-icon i {
-  color: #fff;
+  color: var(--font-main-color);
+
   font-size: 20px;
 }
 
@@ -147,7 +180,8 @@ input[type='number'] {
   margin-left: 5px;
 }
 .coin-info-label-with-icon i {
-  color: #fff;
+  color: var(--font-main-color);
+  transition: color 0.5s ease-in-out;
   font-size: 15px;
 }
 
@@ -163,12 +197,25 @@ input[type='number'] {
   margin-left: 5px;
 }
 .coin-info-column-price .coin-info-value-with-icon i {
-  color: #fff;
+  color: var(--font-main-color);
+  transition: color 0.5s ease-in-out;
   font-size: 15px;
 }
 
 .accordion-wrapper {
   margin-bottom: 10px;
+}
+
+.card-buy {
+  background: var(--green) !important;
+}
+
+.card-sell {
+  background: var(--red) !important;
+}
+
+.accordion-floating {
+  background-color: var(--color-primary);
 }
 
 .account-wrapper-assets {
@@ -200,12 +247,13 @@ input[type='number'] {
 }
 
 .account-wrapper-body {
-  -webkit-border-radius: 10px;
-  -moz-border-radius: 10px;
-  border-radius: 10px;
+  -webkit-border-radius: 15px;
+  -moz-border-radius: 15px;
+  border-radius: 15px;
 
   padding: 10px;
-  background-color: #272b38;
+  background-color: var(--color-primary);
+  transition: background-color 0.5s ease-in-out;
 }
 
 .accordion-wrapper .btn-account-balance,
@@ -267,13 +315,23 @@ input[type='number'] {
 }
 
 .coin-wrapper {
-  width: 25%;
-  -webkit-border-radius: 10px;
-  -moz-border-radius: 10px;
-  border-radius: 10px;
+  width: 24.5%;
+  -webkit-border-radius: 15px;
+  -moz-border-radius: 15px;
+  border-radius: 15px;
   padding: 5px;
-  margin-bottom: 10px;
+  margin: 3px;
   flex: 25% auto;
+  transition: all 0.5s ease-in-out !important;
+}
+
+.coin-wrapper:hover {
+  -webkit-border-radius: 20px;
+  -moz-border-radius: 20px;
+  border-radius: 20px;
+  box-shadow: 0 1px 4px var(--font-secondary-color),
+    0 1px 4px var(--font-secondary-color);
+  transition: all 0.5s ease-in-out !important;
 }
 
 @media (max-width: 1200px) {
@@ -291,12 +349,13 @@ input[type='number'] {
 }
 
 .coin-wrapper-even {
-  background-color: #272b38;
+  background-color: var(--color-card);
+  transition: all 0.5s ease-in-out;
 }
 
 .coin-info-wrapper {
   width: 100%;
-  padding: 10px;
+  padding: 2px;
   display: flex;
   flex-flow: row wrap;
 }
@@ -321,7 +380,8 @@ input[type='number'] {
 
 .coin-info-column-name {
   font-weight: bold;
-  color: #fff;
+  color: var(--font-main-color);
+  transition: color 0.5s ease-in-out;
   font-size: 1rem;
 }
 
@@ -348,11 +408,13 @@ input[type='number'] {
   display: flex;
   flex-flow: row wrap;
   justify-content: flex-end;
-  color: #fff;
+  color: var(--font-main-color);
+  transition: color 0.5s ease-in-out;
 }
 
 .coin-info-sub-wrapper-symbol .coin-info-column-icon button {
-  color: #fff;
+  color: var(--font-main-color);
+  transition: color 0.5s ease-in-out;
 }
 
 .coin-info-column-title {
@@ -375,7 +437,8 @@ input[type='number'] {
 }
 
 .coin-info-column-title-setting i {
-  color: #fff;
+  color: var(--font-main-color);
+  transition: color 0.5s ease-in-out;
   font-size: 15px;
 }
 
@@ -392,13 +455,17 @@ input[type='number'] {
 }
 
 .coin-info-sub-label {
-  border-bottom: 1px dotted #cfcfcf;
+  border-bottom: 1px dotted var(--font-main-color);
 }
 
 .coin-info-label,
 .coin-info-value {
   width: 50%;
   flex: 1 auto;
+}
+
+.coin-predict {
+  color: #00a1e0 !important;
 }
 
 .coin-info-column-title .coin-info-label {
@@ -421,15 +488,19 @@ input[type='number'] {
 .coin-info-value-up,
 .coin-info-value-buy {
   color: #02c076;
+  font-size: 110%;
+  transition: all 0.5s ease-in-out;
 }
 
 .coin-info-value-down,
 .coin-info-value-sell {
   color: #f84960;
+  font-size: 100%;
+  transition: all 0.5s ease-in-out;
 }
 
 .blink {
-  animation: blinker 0.5s normal;
+  animation: blinker 0.5s ease-in-out;
 }
 
 @keyframes blinker {
@@ -438,8 +509,75 @@ input[type='number'] {
   }
 }
 
+/**
+  Start: Theming
+*/
+
+.modal-body {
+  background: var(--color-primary);
+  transition: all 0.5s ease-in-out;
+}
+
+.modal-content {
+  background: var(--color-primary);
+  transition: all 0.5s ease-in-out;
+}
+
+.modal-footer {
+  color: var(--font-main-color);
+  background: var(--color-primary);
+  transition: all 0.5s ease-in-out;
+}
+
+.form-control {
+  color: var(--font-main-color);
+  background: var(--color-primary);
+  transition: all 0.5s ease-in-out;
+}
+
+.rbt-menu {
+  background: var(--color-primary);
+  transition: all 0.5s ease-in-out;
+}
+
+.rbt-input-main {
+  color: var(--font-main-color);
+  transition: color 0.5s ease-in-out;
+}
+
+.dropdown-item {
+  color: var(--font-main-color);
+  transition: color 0.5s ease-in-out;
+}
+
+.card {
+  background: var(--color-card);
+  -webkit-border-radius: 15px;
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  margin: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16), 0 1px 4px rgba(0, 0, 0, 0.23);
+  transition: all 0.5s ease-in-out;
+}
+
+.card-header {
+  background: transparent !important;
+}
+
 .modal-dialog {
-  color: #272b38;
+  color: var(--font-main-color);
+  transition: color 0.5s ease-in-out;
+}
+
+.text-muted {
+  color: var(--font-main-color);
+  transition: color 0.5s ease-in-out;
+}
+
+.rbt-token {
+  color: var(--font-secondary-color);
+  background: var(--color-token);
+  transition: all 0.5s ease-in-out;
 }
 
 .form-header {
@@ -459,6 +597,20 @@ input[type='number'] {
   color: #deb887;
 }
 
+.btn-link {
+  color: var(--font-link);
+  transition: color 0.5s ease-in-out;
+}
+
+.btn {
+  color: var(--font-main-color);
+  transition: color 0.5s ease-in-out;
+}
+
+/**
+  Start: End Theming
+*/
+
 /**
   Start: Manual Trade
 */
@@ -467,6 +619,9 @@ input[type='number'] {
 }
 .input-group .input-group-text {
   width: 100%;
+  color: var(--font-secondary-color);
+  background: var(--color-token);
+  transition: all 0.5s ease-in-out;
 }
 
 .input-group > .input-group-append {
@@ -507,16 +662,21 @@ input[type='number'] {
 }
 
 .btn-manual-trade {
+  -webkit-border-radius: 15px;
+  -moz-border-radius: 15px;
+  border-radius: 15px;
   padding: 0 0.5rem;
   font-size: 0.8rem;
   line-height: 1.5;
-  background-color: #6f42c1;
-  color: #fff;
+  background-color: var(--font-secondary-color) !important;
+  color: var(--color-primary) !important;
+  transition: all 0.5s ease-in-out !important;
 }
 
 .btn-manual-trade:hover {
-  background-color: rgba(110, 66, 193, 0.855);
-  color: #fff;
+  color: #cfcfcf !important;
+  background-color: rgba(86, 44, 163, 0.855) !important;
+  transition: all 0.5s ease-in-out !important;
   text-decoration: none;
 }
 
@@ -527,11 +687,13 @@ input[type='number'] {
 .btn-manual-buy:active:not(:disabled) {
   box-shadow: none;
   background-color: rgb(21, 152, 101);
+  transition: all 0.5s ease-in-out !important;
 }
 
 .btn-manual-buy:hover:not(:disabled):not(:active) {
   box-shadow: none;
   background-color: rgb(46, 209, 145);
+  transition: all 0.5s ease-in-out !important;
 }
 
 .btn-manual-sell {
@@ -541,11 +703,13 @@ input[type='number'] {
 .btn-manual-sell:active:not(:disabled) {
   box-shadow: none;
   background-color: rgb(207, 48, 74);
+  transition: all 0.5s ease-in-out !important;
 }
 
 .btn-manual-sell:hover:not(:disabled):not(:active) {
   box-shadow: none;
   background-color: rgb(255, 66, 101);
+  transition: all 0.5s ease-in-out !important;
 }
 
 .manual-trade-wrappers {
@@ -626,6 +790,12 @@ input[type='number'] {
   color: #f84960;
 }
 
+.btn-backtest {
+  line-height: 0.8rem;
+  vertical-align: unset;
+  color: #f84960;
+}
+
 .btn-cancel-order:hover {
   color: #f84960ce;
 }
@@ -639,11 +809,12 @@ input[type='number'] {
 }
 
 .profit-loss-wrapper-body {
-  -webkit-border-radius: 10px;
-  -moz-border-radius: 10px;
-  border-radius: 10px;
-  padding: 10px;
-  background-color: #272b38;
+  -webkit-border-radius: 15px;
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  padding: 15px;
+  background-color: var(--color-primary);
+  transition: background-color 0.5s ease-in-out;
 
   display: flex;
   flex-flow: row wrap;
@@ -657,6 +828,14 @@ input[type='number'] {
 .profit-loss-value {
   flex: 1 60%;
   text-align: right;
+  font-weight: bold;
+}
+
+.value-loss {
+  color: rgb(207, 70, 70) !important;
+}
+.value-profit {
+  color: rgb(39, 221, 39) !important;
 }
 
 @media (max-width: 1200px) {
@@ -675,6 +854,14 @@ input[type='number'] {
   .profit-loss-wrapper {
     width: 50%;
   }
+}
+
+.past-trades-profit {
+  background-color: var(--green) !important;
+}
+
+.past-trades-loss {
+  background-color: var(--red) !important;
 }
 
 /**
@@ -698,3 +885,176 @@ input[type='number'] {
 /**
   End: Dust Transfer
 */
+
+/**
+  Start: Search Icon
+*/
+.search-container {
+  width: auto !important;
+  margin-top: 10px !important;
+  height: 20px !important;
+}
+
+.search-box {
+  margin-right: 0px;
+  margin-left: 5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  background: var(--font-main-color);
+  transition: all ease-in-out !important;
+}
+.search-box label .search-icon {
+  color: var(--color-primary);
+  transition: color 0.5s ease-in-out;
+}
+
+.search-box:hover {
+  color: var(--font-main-color);
+  background: var(--color-primary);
+  box-shadow: 0 0 0 5px var(--font-secondary-color);
+
+  transition: all 0.5s ease-in-out !important;
+}
+.search-box label .search-icon {
+  color: var(--color-primary);
+  transition: color 0.5s ease-in-out !important;
+}
+
+.search-box:focus {
+  border: none;
+  outline: none;
+  box-shadow: none;
+  padding-left: 15px;
+  cursor: text;
+  width: 150px;
+  border-radius: auto;
+  background: var(--font-main-color);
+  color: var(--color-primary);
+  transition: all 0.5s ease-in-out;
+}
+.search-box label .search-icon {
+  color: var(--color-primary);
+  transition: color 0.5s ease-in-out !important;
+}
+
+.search-box:not(:focus) {
+  width: 20px;
+  height: 20px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  background: var(--font-main-color);
+  color: var(--font-main-color);
+  transition: all 0.5s ease-in-out !important;
+}
+
+#search-submit {
+  position: relative;
+  left: -5000px;
+  transition: all 0.5s ease-in-out !important;
+}
+
+.search-icon {
+  position: relative;
+  left: -16px;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+/**
+  End: Search Icon
+*/
+
+.gg-color-picker {
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+  transform: rotate(-45deg) scale(var(--ggs, 1));
+  width: 18px;
+  height: 10px;
+  border-left: 0;
+  border-top-left-radius: 100px;
+  border-bottom-left-radius: 100px;
+  border-top: 3px solid transparent;
+  border-bottom: 2px solid transparent;
+  border-right: 2px solid transparent;
+  box-shadow: inset 0 0 0 2px;
+}
+
+@keyframes changeColorRed {
+  50% {
+    color: #ff0000;
+  }
+}
+
+@keyframes changeColorGreen {
+  50% {
+    color: #09ff00;
+  }
+}
+
+.gg-chevron-double-up {
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+  transform: scale(var(--ggs, 1));
+  width: 22px;
+  height: 22px;
+
+  animation-duration: 1s;
+  animation-name: changeColorGreen;
+  animation-iteration-count: infinite;
+  animation-direction: forward;
+}
+.gg-chevron-double-up::after,
+.gg-chevron-double-up::before {
+  content: '';
+  display: block;
+  box-sizing: border-box;
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid;
+  border-left: 2px solid;
+  transform: rotate(45deg);
+  left: 7px;
+  bottom: 3px;
+}
+.gg-chevron-double-up::after {
+  bottom: 8px;
+}
+
+.gg-chevron-double-down {
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+  transform: scale(var(--ggs, 1));
+  width: 22px;
+  height: 22px;
+  animation-duration: 1s;
+  animation-name: changeColorRed;
+  animation-iteration-count: infinite;
+  animation-direction: forward;
+}
+
+.gg-chevron-double-down::after,
+.gg-chevron-double-down::before {
+  content: '';
+  display: block;
+  box-sizing: border-box;
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-bottom: 2px solid;
+  border-right: 2px solid;
+  transform: rotate(45deg);
+  left: 7px;
+  top: 3px;
+}
+
+.gg-chevron-double-down::after {
+  top: 8px;
+}

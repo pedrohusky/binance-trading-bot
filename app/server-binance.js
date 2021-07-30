@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const moment = require('moment-timezone');
 const config = require('config');
-const { PubSub, binance, cache, slack } = require('./helpers');
+const { PubSub, binance, cache, messenger } = require('./helpers');
 
 const { getAccountInfo } = require('./cronjob/trailingTradeHelper/common');
 
@@ -56,6 +56,8 @@ const setWebSocketCandles = async logger => {
 
   // Get configuration
   const globalConfiguration = await getGlobalConfiguration(logger);
+
+  await messenger.updateConfiguration(globalConfiguration);
 
   // Retrieve account info from cache
   const accountInfo = await getAccountInfo(logger);
@@ -112,11 +114,10 @@ const loopToCheckLastReceivedAt = async logger => {
     );
 
     if (config.get('featureToggle.notifyDebug')) {
-      slack.sendMessage(
-        `Binance Websocket (${moment().format(
-          'HH:mm:ss.SSS'
-        )}): The bot didn't receive new candle from Binance Websocket since ${lastReceivedAt.fromNow()}.` +
-          ` Reset Websocket connection.`
+      messenger.sendMessage(
+        lastReceivedAt.fromNow(),
+        null,
+        'NO_CANDLE_RECEIVED'
       );
     }
 
