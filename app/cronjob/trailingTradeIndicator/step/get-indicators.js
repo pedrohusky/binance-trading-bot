@@ -255,7 +255,7 @@ const execute = async (logger, rawData) => {
     try {
       prediction = await predictCoinValue(symbol);
     } catch (error) {
-      messenger.errorMessage(`error at prediction ${error}`);
+      messenger.errorMessage(`error at prediction ${error} ${symbol}`);
     }
   }
 
