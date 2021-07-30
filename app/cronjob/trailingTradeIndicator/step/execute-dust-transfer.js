@@ -1,5 +1,5 @@
 const moment = require('moment');
-const { binance, slack, PubSub } = require('../../../helpers');
+const { binance, messenger, PubSub } = require('../../../helpers');
 const { getAPILimit } = require('../../trailingTradeHelper/common');
 
 /**
@@ -28,7 +28,7 @@ const execute = async (logger, rawData) => {
     return acc;
   }, []);
 
-  slack.sendMessage(
+  await messenger.sendMessage(
     `Dust Transfer Action (${moment().format('HH:mm:ss.SSS')}):\n` +
       `- Assets: \`\`\`${JSON.stringify(assets, undefined, 2)}\`\`\`\n` +
       `- Current API Usage: ${getAPILimit(logger)}`
@@ -44,7 +44,7 @@ const execute = async (logger, rawData) => {
       title: `The dust transfer has been executed successfully. The account information will be updated soon.`
     });
 
-    await slack.sendMessage(
+    await messenger.sendMessage(
       `Dust Transfer Result (${moment().format('HH:mm:ss.SSS')}):\n` +
         `- Result: \`\`\`${JSON.stringify(
           dustTransferResult,
@@ -60,7 +60,7 @@ const execute = async (logger, rawData) => {
       title: `The dust transfer is failed to execute. Try again later.`
     });
 
-    await slack.sendMessage(
+    await messenger.sendMessage(
       `Dust Transfer Error (${moment().format('HH:mm:ss.SSS')}):\n` +
         `- Message: ${e.message}\n` +
         `- Current API Usage: ${getAPILimit(logger)}`
