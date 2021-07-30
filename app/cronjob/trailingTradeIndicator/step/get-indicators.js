@@ -90,10 +90,10 @@ const predictCoinValue = async symbol => {
   const cachedPrediction =
     JSON.parse(await cache.get(`${symbol}-last-prediction`)) || [];
 
-  if (cachedPrediction !== []) {
+  if (cachedPrediction !== [] && !_.isEmpty(prediction.predictedValues)) {
     prediction = cachedPrediction;
   }
-  messenger.errorMessage(prediction.toString());
+
   if (
     (new Date() - new Date(prediction.date)) / 1000 > 180 ||
     _.isEmpty(prediction.predictedValues)
