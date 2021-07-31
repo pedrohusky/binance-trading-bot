@@ -155,10 +155,11 @@ const meanPredictedValueIsTrue = data => {
   // Make sure we don't have a last buy, open orders, and it is not greater than ath.
   if (
     !predictValue ||
-    (lastBuyPrice && lastBuyPrice > 0) ||
-    (lastQtyBought && lastQtyBought > 0) ||
+    lastBuyPrice > 0 ||
+    lastQtyBought > 0 ||
     !_.isEmpty(openOrders) ||
-    isGreaterThanATH
+    isGreaterThanATH ||
+    prediction.meanPredictedValue === undefined
   ) {
     return false;
   }
@@ -302,7 +303,11 @@ const isLowerThanStopLossTriggerPrice = data => {
       triggerPrice
     }
   } = data;
-  if (predictValue && predictStopLoss) {
+  if (
+    predictValue &&
+    predictStopLoss &&
+    prediction.meanPredictedValue !== undefined
+  ) {
     const predictionDiff =
       100 - (sellCurrentPrice / prediction.meanPredictedValue[0]) * 100;
     return (

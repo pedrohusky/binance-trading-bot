@@ -320,7 +320,7 @@ bot.hears(
     const cachedDate = JSON.parse(await cache.get(`last-seen-telegram`)) || {};
 
     // If cache is not set (at first init):
-    if (typeof cachedDate !== "string") {
+    if (typeof cachedDate !== 'string') {
       return ctx.reply(
         `Hey, it's your first time here, enjoy! 🤓`,
         mainMenuKeyboard
@@ -341,7 +341,6 @@ bot.hears(
       `Hi. It has been ${dateDifference} minutes since your last visit.`,
       mainMenuKeyboard
     );
-
   }
 );
 

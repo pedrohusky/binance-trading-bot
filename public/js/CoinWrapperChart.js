@@ -14,6 +14,14 @@ class CoinWrapperChart extends React.Component {
   }
 
   componentDidUpdate(nextProps) {
+    if (
+      _.isEmpty(nextProps.symbolInfo.buy.prediction) ||
+      nextProps.symbolInfo.buy.prediction.predictedValues === undefined ||
+      nextProps.symbolInfo.buy.prediction.realCandles === undefined
+    ) {
+      return '';
+    }
+
     // Only update configuration, when the modal is closed and different.
     if (
       this.state.collapsed === false &&
@@ -27,10 +35,6 @@ class CoinWrapperChart extends React.Component {
       const {
         buy: { prediction }
       } = nextProps.symbolInfo;
-
-      if (_.isEmpty(prediction) || !prediction.predictedValues) {
-        return '';
-      }
 
       const minPredicted = _.min(prediction.predictedValues);
       const minReal = _.min(prediction.realCandles);
