@@ -115,30 +115,46 @@ const predictCoinValue = async symbol => {
         candlesToPredict.push(parseFloat(c.close));
       });
 
-      // create model object
+      if (prediction.predictedValues.length === 11) {
+        diffWeight.push(
+          100 -
+            (parseFloat(prediction.predictedValues[9]) /
+              parseFloat(bc[bc.length - 1].close)) *
+              100
+        );
+        candlesToPredict.push(parseFloat(prediction.predictedValues[9]));
+      }
+
+      // create model object - This creates a layer with one unit and one input shape.
       const model = tf.sequential({
         layers: [tf.layers.dense({ units: 1, inputShape: [1] })]
       });
-      // compile model object
+      // compile model object - This is an important part, it tells the model which optimizer to use
+      // and what loss measurement to use.
       model.compile({
         optimizer: tf.train.sgd(0.1),
         loss: tf.losses.meanSquaredError
       });
       // training datasets
-      // In our training datasets, we take room numbers and corresponding price to rent
+      // In our training datasets, we use the candle diff to predict.
       const xs = tf.tensor1d(diffWeight);
       const ys = tf.tensor1d(candlesToPredict);
-      // Train model with fit().method
+      // Train model with fit().method with 1500 epochs (at least 1500 trainings if you use batch size 1)
+      // and batch size of 8(every train will increase the step by 8)
       await model.fit(xs, ys, { epochs: 1500, batchSize: 8 });
-      // Run inference with predict() method.
 
+      // Run inference with predict() method. - And now the most important: the result.
+      // (dataSync() is the array of values returned,
+      // in this case it will return the diffWeight length in predictions(10))
+      // and we want the mean of them.
       const predictionCoinValue = _.mean(
         await model.predict(tf.tensor1d(diffWeight)).dataSync()
       );
 
       if (prediction.predictedValues !== undefined) {
-        if (prediction.predictedValues.length === 10) {
+        if (prediction.predictedValues.length === 11) {
           prediction.predictedValues.shift();
+          candlesToPredict.pop();
         }
       }
       if (prediction.predictedValues === undefined) {
@@ -146,6 +162,7 @@ const predictCoinValue = async symbol => {
       }
 
       prediction.predictedValues.push(predictionCoinValue);
+
 
       const newPrediction = {
         interval: '30m',

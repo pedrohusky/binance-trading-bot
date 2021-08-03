@@ -34,7 +34,7 @@ const PasswordScreen = props => {
 
   return (
     <div className='password-wrapper'>
-      <Modal show>
+      <Modal centered show>
         <Form className='pass-screen' onSubmit={handleFormSubmit}>
           <Modal.Header className='pt-1 pb-1'>
             <Modal.Title>{pass_screen.security_screen}</Modal.Title>

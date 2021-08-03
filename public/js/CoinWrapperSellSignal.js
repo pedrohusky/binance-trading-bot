@@ -259,7 +259,7 @@ class CoinWrapperSellSignal extends React.Component {
           ) : (
             ''
           )}
-          {sellGridRows}
+          <Card className='card-grid-sell'>{sellGridRows}</Card>
 
           {symbolConfiguration.sell.stopLoss.enabled &&
           sell.stopLossTriggerPrice ? (

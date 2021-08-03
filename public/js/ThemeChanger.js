@@ -22,13 +22,9 @@ class ThemeChanger extends React.Component {
   }
 
   render() {
-    const { configuration: { botOptions } } = this.props;
-
-    const theme = botOptions.theme;
-
-    if (theme !== document.documentElement.className) {
-      document.documentElement.className = theme;
-    };
+    const {
+      configuration: { botOptions }
+    } = this.props;
 
     return (
       <div className='header-column-icon-wrapper setting-wrapper'>
