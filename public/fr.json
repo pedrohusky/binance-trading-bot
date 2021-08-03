@@ -1,11 +1,11 @@
 {
   "setting_icon": {
     "global_settings": "Paramètres généraux",
-    "global_settings_description": "Dans ce mode, vous pouvez configurer des paramètres globaux. Si le symbole a des paramètres différents, le changement ne l'affectera pas. Veuillez savoir ce que vous faites lorsque vous effectuez des ajustements.",
+    "global_settings_description": "Dans ce mode, vous pouvez configurer les paramètres globaux. Si le symbole a des paramètres différents, le changement ne l'affectera pas. Attention à bien comprendre ce que vous faites lorsque vous effectuez des ajustements.",
     "_symbols": "Symboles",
     "placeholder_monitor_symbols": "Choisissez les symboles à surveiller...",
     "candle_settings": "Paramètres de la bougie",
-    "candle_interval_description": "Définit l'intervalle de bougie pour calculer le prix le plus élevé/le plus bas.",
+    "candle_interval_description": "Définit l'interval de bougie pour calculer le prix le plus élevé/le plus bas.",
     "candle_limit_description": "Définit la limite de bougie pour calculer le prix le plus élevé/le plus bas.",
     "buy_sell_conf": "Paramètres d'achat et de vente",
     "trading_enabled_description": "Si activé, le bot achètera la devise lorsqu'il détectera le signal d'achat. S'il est désactivé, le bot n'achètera pas, mais continuera à surveiller. Si le marché est volatil, vous pouvez le désactiver.",
@@ -15,14 +15,14 @@
     "trigger_percent_sell": "Pourcentage pour le signal de vente",
     "trigger_percent_sell_description": "Définit le pourcentage pour activer le signal de vente. Exemple : Si défini sur 1,06, le profit minimum sera de 6%. Si le dernier prix d'achat est de 100 $, le bot vendra la devise lorsque le prix actuel est de 106 $.",
     "placeholder_trigger_percent": "Définir le signal d'achat",
-    "stop_price_percent_description": "Définit le pourcentage pour calculer le prix stop. Exemple : Si défini sur 1,01 et que le prix actuel est de 100 $, le prix stop sera de 101 $ pour l'ordre à cours limité.",
+    "stop_price_percent_description": "Définit le pourcentage pour calculer le prix stop. Exemple : Si défini sur 1,01 et que le prix actuel est de 100 $, le prix stop sera de 101 $ pour l'ordre limite.",
     "placeholder_enter_stop_price": "Définir le prix stop",
     "placeholder_enter_limit_price": "Définir le prix limite",
     "limit_price_percent_description": "Définit le pourcentage pour calculer le prix limite. Exemple : Si vous définissez 1 011 et que le prix actuel est de 100 $, le prix limite sera de 101,10 $ pour l'ordre limité.",
     "stop_price_percent_description_sell": "Définit le pourcentage pour calculer le prix stop. Exemple : Si défini à 0,99 et que le prix actuel est de 106 $, le prix stop sera de 104,94 $ pour l'ordre stop.",
     "limit_price_percent_description_sell": "Définit le pourcentage pour calculer le prix limite. Exemple : S'il est défini à 0,98 et que le prix actuel est de 106 $, le prix limite sera de 103,88 $ pour l'ordre limité.",
-    "stop_loss_enabled_description": "Si activé, le bot vendra la pièce lorsqu'il atteindra le pourcentage défini en stop-loss. Vous pouvez activer cette fonction pour éviter des pertes plus importantes que prévu.",
-    "max_loss_percent_description": "Définit le pourcentage de perte maximum du stop-loss. Exemple : s'il est défini sur 0,80, cela signifie que vous ne perdrez pas plus de 20 % du montant total investi. Si vous avez acheté la pièce au prix de 100 $, le dernier prix long sera fixé à 100 $ et le stop-loss à 80 $. S'il atteint 80 $, le bot vendra tout le solde de devises disponible dans un ordre de marché. ",
+    "stop_loss_enabled_description": "Si activé, le bot vendra la pièce lorsqu'elle atteindra le pourcentage défini en stop-loss. Vous pouvez activer cette fonction pour éviter des pertes plus importantes que prévu.",
+    "max_loss_percent_description": "Définit le pourcentage de perte maximum du stop-loss. Exemple : s'il est défini sur 0,80 cela signifie que vous ne perdrez pas plus de 20 % du montant total investi. Si vous avez acheté la pièce au prix de 100 $, le dernier prix long sera fixé à 100 $ et le stop-loss à 80 $. S'il atteint 80 $, le bot vendra tout le solde de devises disponible dans un ordre de marché. ",
     "placeholder_enter_max_loss": "Définir la perte maximale",
     "temporary_disable_buy": "Désactiver temporairement l'achat pendant",
     "temporary_disable_buy_description": "Définit combien de temps désactiver l'achat de devises en cas d'activation du stop-loss. Exemple : Si défini sur 360, l'achat sera désactivé pendant 6 heures.",
@@ -30,17 +30,17 @@
     "note_changes": "Notez que les modifications prendront effet au prochain tick",
     "reset_global_settings": "Réinitialiser les paramètres globaux",
     "warning_global_save": "Attention : vous êtes sur le point d'enregistrer le réglage global",
-    "ask_all_or_global": "Voulez-vous appliquer les paramètres à tous les symboles ou uniquement au global ?",
-    "delete_symbol_setting": "Voulez-vous supprimer les paramètres des symboles ?",
+    "ask_all_or_global": "Voulez-vous appliquer les paramètres à tous les symboles ou uniquement au global?",
+    "delete_symbol_setting": "Voulez-vous supprimer les paramètres des symboles?",
     "choosed_all_symbols": "Si vous appliquez à tous et qu'un symbole a des paramètres différents, il sera perdu !",
-    "choosed_global": "Si vous postulez globalement et qu'un symbole a une configuration différente, il sera défini sur personnalisé !",
+    "choosed_global": "Si vous appliquez globalement et qu'un symbole a une configuration différente, il sera défini sur personnalisé !",
     "apply_all_symbols": "Appliquer à tous les symboles",
     "apply_global_only": "Appliquer globalement",
     "_customise": "Personnaliser",
-    "_description": "Dans cette fenêtre, vous pouvez remplacer les paramètres généraux d'un symbole spécifique. Veuillez savoir ce que vous faites. Les paramètres appliqués ici n'affecteront que ce symbole.",
+    "_description": "Dans cette fenêtre, vous pouvez remplacer les paramètres généraux d'un symbole spécifique. Attention à bien être sûr de ce que vous faites. Les paramètres appliqués ici n'affecteront que ce symbole.",
     "last_buy_price_remove_threshold_description": {
       "1": "Définit la limite pour supprimer le dernier cours acheteur sur les symboles se terminant par",
-      "2": " Lorsque le prix de la devise tombe en dessous de la limite, le bot supprimera le dernier prix acheté. Si le bot n'a pas vendu la devise, vous pouvez ajouter manuellement le dernier prix acheté, mais s'il est inférieur à la limite, il être à nouveau supprimé."
+      "2": " Lorsque le prix de la devise tombe en dessous de la limite, le bot supprimera le dernier prix acheté. Si le bot n'a pas vendu la devise, vous pouvez ajouter manuellement le dernier prix acheté, mais s'il est inférieur à la limite, il sera à nouveau supprimé."
     },
     "placeholder_last_buy_remove_price_threshold": "Définir le seuil de suppression du dernier prix d'achat",
     "max_purchase_amount_for": "Montant maximum à acheter",
@@ -68,18 +68,18 @@
     "weight_green_candle": "Poids des bougies vertes",
     "weight_red_candle": "Poids des bougies rouges",
     "weight_green_candle_description": "Poids des bougies vertes pour le calcul de l'indicateur. Veuillez ne pas définir cette valeur plus haut que le poids des bougies rouges ! Le robot perdra la fonction d'achat après une baisse de prix.",
-    "weight_red_candle_description": "Poids des bougies rouges pour le calcul de l'indicateur. S'il vous plaît, cette valeur doit être supérieure au poids des bougies vertes!",
+    "weight_red_candle_description": "Poids des bougies rouges pour le calcul de l'indicateur. *ATTENTION*, cette valeur doit être supérieure au poids des bougies vertes!",
     "grid_buy_strategy_activate": "Activer la stratégie de grille",
     "grid_buy_strategy_activate_description": "Activera l'achat multiple de la même devise. À utiliser avec précaution.",
     "grid_buy_strategy": "Acheter à nouveau après différence",
     "grid_buy_strategy_description": "Active la possibilité d'achats multiples, en calculant toujours le prix moyen. Ex: Si défini à 1%, le bot achètera à nouveau la devise si la différence entre le dernier prix d'achat est supérieure à 1%.",
-    "strategy_options": "Ajustements de stratégie",
+    "strategy_options": "Ajustements de la stratégie",
     "trade_options": "Ajustements commerciaux",
     "bot_options": {
       "bot_options": "Options de bot",
       "_language": "Langue",
-      "select_language": "Sélectionnez la langue du bot",
-      "use_slack": "Utilisez Slack pour recevoir des messages",
+      "select_language": "Sélectionner la langue du bot",
+      "use_slack": "Utiliser Slack pour recevoir des messages",
       "use_telegram": "Utiliser Telegram pour recevoir des messages",
       "_security": "Sécurité",
       "login_expire_time": "Temps d'expiration de la connexion",
@@ -95,7 +95,7 @@
         "1": "Cela supprimera toutes vos données de cache et de base de données.",
         "2": "Vos paramètres seront comme la première fois que vous avez démarré le bot.",
         "3": "Si vous avez un ordre d'achat/vente ouvert, cette fonction supprimera toutes les données le concernant.",
-        "4": "Veuillez ne pas utiliser cette fonction avec des commandes ouvertes."
+        "4": "Veuillez ne pas utiliser cette fonction avec des ordres ouverts."
       }
     }
   },
@@ -120,12 +120,12 @@
       "action_sell_disabled": {
         "1": "Le prix actuel a atteint le prix d'activation de la vente.",
         "2": "Cependant, l'action est temporairement désactivée par ",
-        "3": "Résumez le processus de vente après : "
+        "3": "Reprendre le processus de vente après : "
       },
       "action_sell_disabled_stop_loss": {
         "1": "Le prix actuel a atteint le prix stop-loss. ",
         "2": "Cependant, l'action est temporairement désactivée par ",
-        "3": " Résumer le processus de vente après : "
+        "3": " Reprendre le processus de vente après : "
       },
       "action_wait": {
         "1": "Le prix actuel a atteint le prix d'activation. ",
@@ -224,7 +224,7 @@
     "latest_version": "Dernière version"
   },
   "profit_loss_wrapper": {
-    "profit_loss_description": "Cette section montre approximativement votre profit/perte pour la liste actuelle des symboles ouverts à la vente avec le dernier prix d'achat défini. Le calcul ajoute simplement votre profit/perte pour chaque symbole. Notez qu'il ne représente pas votre trading gains et pertes de l'histoire."
+    "profit_loss_description": "Cette section montre approximativement votre profit/perte pour la liste actuelle des symboles ouverts à la vente avec le dernier prix d'achat défini. Le calcul ajoute simplement votre profit/perte pour chaque symbole. Notez qu'il ne représente pas vos gains et pertes de l'historique de trading."
   },
   "symbol_delete": {
     "remove_symbol": "Supprimer le symbole",
@@ -250,7 +250,7 @@
   "symbol_enable_action": {
     "resume_symbol_action": "Reprendre l'action du symbole",
     "_description": {
-      "1": "Voulez-vous vraiment reprendre l'action du symbole ?",
+      "1": "Voulez-vous vraiment reprendre l'action du symbole?",
       "2": "Si le marché est volatil, le bot l'achètera à nouveau s'il reçoit le signal d'achat.",
       "3": "Procédez avec prudence."
     }
@@ -283,7 +283,7 @@
     }
   },
   "pass_screen": {
-    "security_screen": "Écran de sécurité",
+    "security_screen": "Connexion",
     "enter_pass": "Remplissez votre mot de passe",
     "_pass": "Mot de passe",
     "pass_from_env": "Remplir avec le mot de passe défini dans le fichier .env",
@@ -303,7 +303,7 @@
     "_limit": "Limite",
     "_buy": "Acheter",
     "_sell": "Vendu",
-    "used_weight": "Poids API utilisé (sur 1 minute)",
+    "used_weight": "Poids API utilisé (1 min)",
     "trading_enabled": "Trading activé",
     "stop_price_percent": "Pourcentage de prix stop",
     "limit_price_percent": "Pourcentage de prix limite",
@@ -325,7 +325,7 @@
     "trading_disabled": "Trading désactivé",
     "last_buy_price": "Dernier prix d'achat",
     "averaged_price": "Prix moyen",
-    "profit_loss": "Gains/Perte",
+    "profit_loss": "Gains/Pertes",
     "_settings": "Paramètres",
     "last_buy_price_remove_threshold": "Seuil pour supprimer le dernier prix d'achat",
     "_remove": "Supprimer",
@@ -340,10 +340,10 @@
     "_trending": "Tendance"
   },
   "sort_icon": {
-    "_default": "Default",
-    "_name": "Name (Alphabetically)",
-    "_buy": "Acheter la différence",
-    "_sell": "Vendre la différence",
+    "_default": "Défaut",
+    "_name": "Nom (order alphabétique)",
+    "_buy": "Achat (différence)",
+    "_sell": "Vente (différence",
     "_profit": "Profit"
   },
   "send_message": {
@@ -352,33 +352,33 @@
       "2": "Veuillez réinitialiser ma connexion Websocket."
     },
     "place_buy": {
-      "1": "*Placer* un ordre d'achat.",
+      "1": "*Placement* d'un ordre d'achat.",
       "2": "Pièce",
       "3": "Quantité :",
-      "4": "Au prix :"
+      "4": "Prix :"
     },
     "place_buy_done": {
-      "1": "Ordre d'achat passé *successivement*.",
+      "1": "Ordre d'achat placé *avec succès*.",
       "2": "Pièce"
     },
     "place_sell": {
-      "1": "*Placing* sell order.",
+      "1": "*Placement* d'un ordre de vente.",
       "2": "Coin",
       "3": "Quantité :",
-      "4": "Au prix :"
+      "4": "Prix :"
     },
     "place_sell_done": {
-      "1": "Ordre de vente placé *successfully*.",
+      "1": "Ordre de vente placé *avec succès*.",
       "2": "Pièce"
     },
     "check_buy": "*Vérification* de l'achat de ",
-    "check_sell": "*Checking* vente de ",
+    "check_sell": "*Vérification* de la vente de ",
     "buy_confirmed": {
-      "1": "Ordre d'achat confirmé *successivement*.",
+      "1": "Ordre d'achat confirmé *avec succès*.",
       "2": "Pièce"
     },
     "sell_confirmed": {
-      "1": "Ordre de vente confirmé *successivement*.",
+      "1": "Ordre de vente confirmé *avec succès*.",
       "2": "Pièce"
     },
     "cancel_buy": {
@@ -390,10 +390,10 @@
       "2": " *a été annulé*."
     },
     "sell_stop_loss": {
-      "1": "A vendu *tout* de ",
+      "1": "Vente de *tout* le ",
       "2": " à cause du stop-loss."
     },
     "remove_last_buy_from": "Suppression du dernier prix d'achat de ",
-    "default_warning": "Sorry. Je n'ai pas été en mesure de déterminer l'action. Il y a un problème."
+    "default_warning": "Désolé. Je n'ai pas été en mesure de déterminer l'action. Il y a eu un problème."
   }
 }
