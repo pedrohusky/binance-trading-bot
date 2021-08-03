@@ -39,7 +39,7 @@ const handleLatest = async (logger, ws, _payload) => {
   logger.info({ globalConfiguration }, 'Configuration from MongoDB');
 
   if (
-    _.isEmpty(languageData) &&
+    _.isEmpty(languageData) ||
     languageReady !== globalConfiguration.botOptions.language
   ) {
     languageData = require(`../../../../public/${globalConfiguration.botOptions.language}.json`);

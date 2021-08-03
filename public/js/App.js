@@ -252,7 +252,6 @@ class App extends React.Component {
     } = this.state;
 
     if (configuration.botOptions !== undefined) {
-
       if (login === {} || (passwordActivated && !login.logged)) {
         return (
           <div className='app'>

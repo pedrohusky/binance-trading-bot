@@ -10,7 +10,9 @@ class AccountWrapperAsset extends React.Component {
         <div className='account-wrapper-body'>
           <div className='account-asset-coin'>{balance.asset}</div>
           <div className='account-asset-row'>
-            <span className='account-asset-label'>{jsonStrings[0]._total}:</span>
+            <span className='account-asset-label'>
+              {jsonStrings[0]._total}:
+            </span>
             <span className='account-asset-value'>
               {(parseFloat(balance.free) + parseFloat(balance.locked)).toFixed(
                 5
@@ -24,7 +26,9 @@ class AccountWrapperAsset extends React.Component {
             </span>
           </div>
           <div className='account-asset-row'>
-            <span className='account-asset-label'>{jsonStrings[0]._locked}:</span>
+            <span className='account-asset-label'>
+              {jsonStrings[0]._locked}:
+            </span>
             <span className='account-asset-value'>
               {parseFloat(balance.locked).toFixed(5)}
             </span>
