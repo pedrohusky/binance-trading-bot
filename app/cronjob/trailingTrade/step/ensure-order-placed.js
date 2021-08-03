@@ -157,8 +157,6 @@ const addPastTrade = async (symbol, oldOrder) => {
 
   cachedTrades.push(trade);
 
-  messenger.errorMessage(`Cached trades: ${JSON.stringify(cachedTrades)}`);
-
   const sanitizedTrades = await sanitizePastTrades(cachedTrades);
 
   await cache.set(`past-trades`, JSON.stringify(sanitizedTrades));

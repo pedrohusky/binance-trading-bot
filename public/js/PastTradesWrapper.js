@@ -88,7 +88,7 @@ class PastTradesWrapper extends React.Component {
               <div className='d-flex flex-row justify-content-between'>
                 <div className='flex-column-left'>
                   <div className='btn-profit-loss text-uppercase font-weight-bold'>
-                    {jsonStrings.jsonStrings + ' '}
+                    {jsonStrings.past_trades + ' '}
                   </div>
                 </div>
                 <div className='flex-column-right pt-2'>
