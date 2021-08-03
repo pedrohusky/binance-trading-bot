@@ -6,6 +6,8 @@ RUN apk add --no-cache make gcc g++ python
 # Add configuration files
 COPY image-files/ /
 
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 WORKDIR /srv
 
 COPY package*.json ./

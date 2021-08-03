@@ -501,7 +501,7 @@ class CoinWrapperBuySignal extends React.Component {
           ''
         )}
         <div className='coin-info-column coin-info-column-price divider mb-1'></div>
-        {buyGridRows}
+        <Card className='card-grid-buy'>{buyGridRows}</Card>
         {buy.processMessage ? (
           <div className='d-flex flex-column w-100'>
             <div className='coin-info-column coin-info-column-price divider'></div>

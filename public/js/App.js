@@ -1,8 +1,7 @@
 /* eslint-disable react/jsx-no-undef */
 /* eslint-disable no-undef */
 
-let languageReady = '';
-let languageData = {};
+let currentTheme = '';
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -252,6 +251,11 @@ class App extends React.Component {
     } = this.state;
 
     if (configuration.botOptions !== undefined) {
+      if (configuration.botOptions.theme !== currentTheme) {
+        document.documentElement.className = configuration.botOptions.theme;
+        currentTheme = configuration.botOptions.theme;
+      }
+
       if (login === {} || (passwordActivated && !login.logged)) {
         return (
           <div className='app'>

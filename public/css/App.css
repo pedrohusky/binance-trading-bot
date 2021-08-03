@@ -9,7 +9,6 @@
   --font-main-color: #333333;
   --green: #d8e0d6;
   --red: #ddd0d0;
-  --pass-screen-color: rgb(255, 255, 255);
 }
 .theme-dark {
   --color-primary: #191f2c;
@@ -20,7 +19,6 @@
   --font-main-color: #cfcfcf;
   --green: #28413f;
   --red: #3a2727;
-  --pass-screen-color: rgb(39, 41, 46);
 }
 
 body {
@@ -369,6 +367,7 @@ input[type='number'] {
 }
 
 .coin-info-sub-open-order-wrapper {
+  margin: auto;
   width: 100%;
   display: flex;
   flex-flow: row wrap;
@@ -565,6 +564,40 @@ input[type='number'] {
 
 .card {
   background: var(--color-card);
+  -webkit-border-radius: 15px;
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  margin: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16), 0 1px 4px rgba(0, 0, 0, 0.23);
+  transition: all 0.5s ease-in-out;
+}
+
+.card-grid {
+  width: 100%;
+  background: var(--color-token);
+  -webkit-border-radius: 15px;
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  margin: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16), 0 1px 4px rgba(0, 0, 0, 0.23);
+  transition: all 0.5s ease-in-out;
+}
+
+
+.card-grid-buy {
+  width: 100%;
+  background: var(--green);
+  -webkit-border-radius: 15px;
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  margin: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16), 0 1px 4px rgba(0, 0, 0, 0.23);
+  transition: all 0.5s ease-in-out;
+}
+
+.card-grid-sell {
+  width: 100%;
+  background: var(--red);
   -webkit-border-radius: 15px;
   -moz-border-radius: 15px;
   border-radius: 15px;
@@ -1100,7 +1133,7 @@ input[type='number'] {
 }
 
 .pass-screen {
-  background-color: rgb(255, 255, 255) !important;
+  background-color: var(--color-primary) !important;
   transition: all 0.5s ease-in-out !important;
 }
 

@@ -119,7 +119,10 @@ const execute = async (logger, rawData) => {
         prediction.predictedValues[i] =
           prediction.predictedValues[i].toFixed(precision);
       }
-      prediction.realCandles[i] = prediction.realCandles[i].toFixed(precision);
+      if (prediction.realCandles.length > i) {
+        prediction.realCandles[i] =
+          prediction.realCandles[i].toFixed(precision);
+      }
     }
 
   // ATH calc
