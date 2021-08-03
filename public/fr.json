@@ -228,7 +228,7 @@
   },
   "symbol_delete": {
     "remove_symbol": "Supprimer le symbole",
-    "_description": {
+    "symbol_delete_description": {
       "1": "Voulez-vous vraiment supprimer le symbole du cache ?",
       "2": "Notez que cela n'effacera que les valeurs mises en cache.",
       "3": "Si le symbole est toujours surveillé, il réapparaîtra."

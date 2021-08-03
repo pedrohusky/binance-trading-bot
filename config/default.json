@@ -40,7 +40,8 @@
   },
   "featureToggle": {
     "notifyOrderConfirm": true,
-    "notifyDebug": false
+    "notifyDebug": false,
+    "notifyOrderExecute": true
   },
   "jobs": {
     "alive": {
@@ -85,7 +86,6 @@
         "language": "en",
         "telegram": false,
         "slack": false,
-        "calcFees": true,
         "sortType": 0,
         "login": {
           "passwordActivated": false,
@@ -100,23 +100,31 @@
         "predictValue": false,
         "predictStopLoss": false,
         "lastBuyPriceRemoveThreshold": -1,
-        "lastBuyPriceRemoveThresholds": {},
-        "maxPurchaseAmount": -1,
-        "maxPurchaseAmounts": {},
         "minPurchaseAmount": -1,
-        "minPurchaseAmounts": {},
-        "triggerPercentage": 1.0,
-        "stopPercentage": 1.02,
-        "limitPercentage": 1.021
+        "gridTrade": [
+          {
+            "triggerPercentage": 1,
+            "stopPercentage": 1.02,
+            "limitPercentage": 1.021,
+            "maxPurchaseAmount": -1,
+            "maxPurchaseAmounts": {}
+          }
+        ]
       },
       "sell": {
         "enabled": true,
         "trendDownMarketSell": true,
         "stakeCoinEnabled": true,
-        "triggerPercentage": 1.06,
         "hardPercentage": 1.1,
-        "stopPercentage": 0.98,
-        "limitPercentage": 0.979,
+        "gridTrade": [
+          {
+            "triggerPercentage": 1.06,
+            "stopPercentage": 0.98,
+            "limitPercentage": 0.979,
+            "quantityPercentage": -1,
+            "quantityPercentages": {}
+          }
+        ],
         "stopLoss": {
           "enabled": false,
           "maxLossPercentage": 0.8,
@@ -129,7 +137,8 @@
         "temporaryDisableActionAfterConfirmingOrder": 20,
         "checkManualBuyOrderPeriod": 5,
         "placeManualOrderInterval": 5,
-        "refreshAccountInfoPeriod": 1
+        "refreshAccountInfoPeriod": 1,
+        "checkOrderExecutePeriod": 10
       }
     },
     "trailingTradeIndicator": {

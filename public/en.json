@@ -39,7 +39,7 @@
     "_customise": "Customize",
     "_description": "In this window you can override the global settings for a specific symbol. Please know what you are doing. The settings applied here will only affect this symbol.",
     "last_buy_price_remove_threshold_description": {
-      "1": "Sets the limit for removing the last bid price on symbols ending with",
+      "1": "Sets the limit for removing the last buy price on symbols ending with",
       "2": " When the currency price drops below the limit, the bot will remove the last purchased price. If the bot has not sold the currency, you can manually add the last purchased price, but if it is below the limit, will be removed again."
     },
     "placeholder_last_buy_remove_price_threshold": "Set the threshold to remove the last buy price from",
@@ -228,7 +228,7 @@
   },
   "symbol_delete": {
     "remove_symbol": "Remove symbol",
-    "_description": {
+    "symbol_delete_description": {
       "1": "Are you sure you want to remove the symbol from the cache?",
       "2": "Note that this will only erase cached values.",
       "3": "If the symbol is still being monitored, it will appear again."

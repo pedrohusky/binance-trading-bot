@@ -19,8 +19,8 @@ class SortIcon extends React.Component {
       target.type === 'checkbox'
         ? target.checked
         : target.type === 'select'
-          ? +target.value
-          : target.value;
+        ? +target.value
+        : target.value;
 
     this.setState({
       sortType: value
@@ -31,9 +31,7 @@ class SortIcon extends React.Component {
   render() {
     const { sortType } = this.state;
     return (
-      <Form.Group
-        controlId='sort-icon'
-        className='mb-2'>
+      <Form.Group controlId='sort-icon' className='mb-2'>
         <Form.Control
           size='sm'
           as='select'

@@ -106,7 +106,7 @@
     "no_asset_convert": "Não há nenhuma moeda para converter.",
     "_convert": "Converter"
   },
-  "coin_wrapper": {
+  "jsonStrings": {
     "_actions": {
       "action_disabled": "Desativado temporariamente",
       "action_buy_check": "Checando ordem de compra",
@@ -288,7 +288,7 @@
     "_pass": "Senha",
     "pass_from_env": "Preencha com a senha definida no arquivo .env"
   },
-  "common_strings": {
+  "jsonStrings": {
     "_interval": "Intervalo",
     "_limit": "Limite",
     "_buy": "Compra",

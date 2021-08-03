@@ -2,11 +2,18 @@
 const moment = require('moment');
 const _ = require('lodash');
 const config = require('config');
-const { cache, PubSub, binance, messenger } = require('../../../helpers');
+const {
+  cache,
+  PubSub,
+  binance,
+  messenger,
+  slack
+} = require('../../../helpers');
 const {
   getLastBuyPrice,
   saveLastBuyPrice,
-  getAPILimit
+  getAPILimit,
+  saveOrder
 } = require('../../trailingTradeHelper/common');
 
 /**
@@ -289,6 +296,17 @@ const execute = async (logger, rawData) => {
             },
             'The order is not filled, update next check time.'
           );
+
+          // Save order
+          await saveOrder(logger, {
+            order: { ...buyOrder },
+            botStatus: {
+              savedAt: moment().format(),
+              savedBy: 'ensure-manual-buy-order',
+              savedMessage:
+                'The order has already filled and updated the last buy price.'
+            }
+          });
 
           await cache.hset(
             `trailing-trade-manual-buy-order-${symbol}`,

@@ -184,7 +184,7 @@ input[type='number'] {
 .coin-info-label-with-icon i {
   color: var(--font-main-color);
   transition: color 0.5s ease-in-out;
-  font-size: 15px;
+  /* font-size: 15px; */
 }
 
 .coin-info-column-price .coin-info-value-with-icon {
@@ -457,17 +457,28 @@ input[type='number'] {
 }
 
 .coin-info-sub-label {
-  border-bottom: 1px dotted var(--font-main-color);
+  display: block;
+  width: 100%;
+  font-weight: bold;
+  border-bottom: 1px dashed var(--font-main-color);
 }
 
 .coin-info-label,
 .coin-info-value {
-  width: 50%;
   flex: 1 auto;
+  line-height: 23px;
+}
+
+.coin-info-label {
+  width: auto;
+}
+
+.coin-info-value {
+  width: auto;
 }
 
 .coin-predict {
-  color: #00a1e0 !important;
+  color: #fce300 !important;
 }
 
 .coin-info-column-title .coin-info-label {
@@ -679,6 +690,20 @@ input[type='number'] {
   color: #cfcfcf !important;
   background-color: rgba(86, 44, 163, 0.855) !important;
   transition: all 0.5s ease-in-out !important;
+  text-decoration: none;
+}
+
+.btn-trigger-grid-trade {
+  padding: 0 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  background-color: rgba(40, 167, 69, 0.95);
+  color: #fff;
+}
+
+.btn-trigger-grid-trade:hover {
+  background-color: rgba(40, 167, 69, 0.85);
+  color: #fff;
   text-decoration: none;
 }
 
@@ -1067,11 +1092,101 @@ input[type='number'] {
 
 .crypto-img {
   margin-left: auto;
+  margin-top: auto;
   width: 30px;
   height: 30px;
+  border: 2px solid var(--font-main-color) !important;
+  border-radius: 25px;
 }
 
 .pass-screen {
   background-color: rgb(255, 255, 255) !important;
+  transition: all 0.5s ease-in-out !important;
+}
+
+/**
+  Start: Grid Trade
+*/
+.btn-add-new-grid-trade-buy {
+  background-color: #02c076;
+  color: var(--font-main-color) !important;
+  transition: all 0.5s ease-in-out !important;
+}
+
+.btn-add-new-grid-trade-buy:hover {
+  box-shadow: none;
+  color: var(--font-main-color) !important;
+  background-color: #2ed191;
+  transition: all 0.5s ease-in-out !important;
+}
+
+.btn-add-new-grid-trade-sell {
+  background-color: #f84960;
+  color: var(--font-main-color) !important;
+  transition: all 0.5s ease-in-out !important;
+}
+
+.btn-add-new-grid-trade-sell:hover {
+  box-shadow: none;
+  background-color: #ff4265;
+  color: var(--font-main-color) !important;
+  transition: all 0.5s ease-in-out !important;
+}
+
+.coin-info-column-grid {
+  flex: 1 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--font-main-color) !important;
+  -webkit-border-radius: 15px;
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  padding: 3px;
+  margin-bottom: -1px;
+  transition: all 0.5s ease-in-out !important;
+}
+
+.coin-info-column-grid:last-child {
+  margin-bottom: 0;
+}
+
+.coin-info-grid-label {
+  width: 100%;
+}
+
+.grid-trade {
+  -webkit-border-radius: 15px;
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  color: var(--font-main-color) !important;
+  transition: all 0.5s ease-in-out !important;
+}
+
+.grid-trade-btn {
+  color: var(--font-main-color) !important;
+  transition: all 0.5s ease-in-out !important;
+}
+/**
+  End: Grid Trade
+*/
+
+
+.close-btn {
+  color: var(--font-main-color) !important;
+  transition: all 0.5s ease-in-out !important;
+}
+
+.font-big {
+  font-size: 12px;
+}
+
+.badges {
+  color: var(--color-primary) !important;
+  background-color: var(--font-main-color) !important;
+  transition: all 0.5s ease-in-out !important;
+}
+
+.badge-no-color {
+  color: var(--color-primary) !important;
   transition: all 0.5s ease-in-out !important;
 }

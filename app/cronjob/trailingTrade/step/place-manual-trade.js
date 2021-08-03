@@ -4,7 +4,8 @@ const { binance, cache, PubSub, messenger } = require('../../../helpers');
 const {
   getAPILimit,
   getAndCacheOpenOrdersForSymbol,
-  getAccountInfoFromAPI
+  getAccountInfoFromAPI,
+  saveOrder
 } = require('../../trailingTradeHelper/common');
 /**
  * Format order params for market total
@@ -229,6 +230,17 @@ const recordOrder = async (logger, orderResult) => {
     await cache.set(`${symbol}-last-sell-order`, JSON.stringify(orderResult));
     logger.info({ orderResult }, 'Record sell order');
   }
+  // Save order
+  await saveOrder(logger, {
+    order: {
+      ...orderResult
+    },
+    botStatus: {
+      savedAt: moment().format(),
+      savedBy: 'place-manual-trade',
+      savedMessage: 'The manual order is placed.'
+    }
+  });
 };
 
 /**

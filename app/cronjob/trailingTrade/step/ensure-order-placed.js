@@ -13,7 +13,8 @@ const {
   getAccountInfoFromAPI,
   disableAction,
   getLastBuyPrice,
-  saveLastBuyPrice
+  saveLastBuyPrice,
+  saveOrder
 } = require('../../trailingTradeHelper/common');
 
 /**
@@ -325,6 +326,18 @@ const execute = async (logger, rawData) => {
               messenger.sendMessage(symbol, lastBuyOrder, 'BUY_CONFIRMED');
             }
 
+            // Save order
+            await saveOrder(logger, {
+              order: {
+                ...lastBuyOrder
+              },
+              botStatus: {
+                savedAt: moment().format(),
+                savedBy: 'ensure-order-placed',
+                savedMessage: 'The buy order is found in the open orders.'
+              }
+            });
+
             // Lock symbol action 20 seconds to avoid API limit
             await disableAction(
               symbol,
@@ -437,6 +450,18 @@ const execute = async (logger, rawData) => {
           if (_.get(featureToggle, 'notifyOrderConfirm', false) === true) {
             messenger.sendMessage(symbol, lastBuyOrder, 'SELL_CONFIRMED');
           }
+
+          // Save order
+          await saveOrder(logger, {
+            order: {
+              ...lastSellOrder
+            },
+            botStatus: {
+              savedAt: moment().format(),
+              savedBy: 'ensure-order-placed',
+              savedMessage: 'The sell order is found in the open orders.'
+            }
+          });
 
           return setSellActionAndMessage(
             logger,

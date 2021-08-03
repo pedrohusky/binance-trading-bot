@@ -228,7 +228,7 @@
   },
   "symbol_delete": {
     "remove_symbol": "Verwijder symbool",
-    "_description": {
+    "symbol_delete_description": {
       "1": "Weet u zeker dat u het symbool uit de cache wilt verwijderen?",
       "2": "Merk op dat hiermee alleen de cachewaarden worden gewist.",
       "3": "Als het symbool nog steeds wordt gecontroleerd, verschijnt het opnieuw."

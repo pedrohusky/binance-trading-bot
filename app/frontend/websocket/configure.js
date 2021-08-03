@@ -5,20 +5,22 @@ const {
   handleLatest,
   handleSettingUpdate,
   handleSymbolUpdateLastBuyPrice,
-  handleSymbolBackTest,
   handleSymbolDelete,
-  handlePastTradesErase,
-  handleResetFactorySettings,
   handleSymbolSettingUpdate,
   handleSymbolSettingDelete,
+  handleSymbolGridTradeDelete,
   handleSymbolEnableAction,
+  handleSymbolTriggerBuy,
   handleManualTrade,
   handleManualTradeAllSymbols,
   handleCancelOrder,
   handleDustTransferGet,
   handleDustTransferExecute,
   handlePassword,
-  handleDisconnect
+  handleDisconnect,
+  handleSymbolBackTest,
+  handlePastTradesErase,
+  handleResetFactorySettings
 } = require('./handlers');
 
 const handleWarning = (logger, ws, message) => {
@@ -49,70 +51,38 @@ const configureWebSocket = async (server, funcLogger) => {
         payload = null;
       }
       if (payload === null || payload.command === undefined) {
-        ws.send(handleWarning(logger, ws, 'Command is not provided.'));
+        handleWarning(logger, ws, 'Command is not provided.');
         return;
       }
 
       const commandLogger = logger.child({ payload });
 
-      switch (payload.command) {
-        case 'latest':
-          await handleLatest(commandLogger, ws, payload);
-          break;
-        case 'disconnect':
-          await handleDisconnect(commandLogger, ws, payload);
-          break;
-        case 'setting-update':
-          await handleSettingUpdate(commandLogger, ws, payload);
-          break;
-        case 'symbol-update-last-buy-price':
-          await handleSymbolUpdateLastBuyPrice(commandLogger, ws, payload);
-          break;
-        case 'symbol-backtest':
-          await handleSymbolBackTest(commandLogger, ws, payload);
-          break;
-        case 'symbol-delete':
-          await handleSymbolDelete(commandLogger, ws, payload);
-          break;
-        case 'past-trades-erase':
-          await handlePastTradesErase(commandLogger, ws, payload);
-          break;
-        case 'reset-factory-settings':
-          await handleResetFactorySettings(commandLogger, ws, payload);
-          break;
-        case 'verify-password':
-          await handlePassword(commandLogger, ws, payload);
-          break;
-        case 'symbol-setting-update':
-          await handleSymbolSettingUpdate(commandLogger, ws, payload);
-          break;
-        case 'symbol-setting-delete':
-          await handleSymbolSettingDelete(commandLogger, ws, payload);
-          break;
-        case 'symbol-enable-action':
-          await handleSymbolEnableAction(commandLogger, ws, payload);
-          break;
-        case 'manual-trade':
-          await handleManualTrade(commandLogger, ws, payload);
-          break;
-        case 'manual-trade-all-symbols':
-          await handleManualTradeAllSymbols(commandLogger, ws, payload);
-          break;
-        case 'cancel-order':
-          await handleCancelOrder(commandLogger, ws, payload);
-          break;
-        case 'dust-transfer-get':
-          await handleDustTransferGet(commandLogger, ws, payload);
-          break;
-        case 'dust-transfer-execute':
-          await handleDustTransferExecute(commandLogger, ws, payload);
-          break;
-        default:
-          handleWarning(
-            logger,
-            ws,
-            `Command '${payload.command}' is not recognised.`
-          );
+      const commandMaps = {
+        latest: handleLatest,
+        'setting-update': handleSettingUpdate,
+        'symbol-update-last-buy-price': handleSymbolUpdateLastBuyPrice,
+        'symbol-delete': handleSymbolDelete,
+        'symbol-setting-update': handleSymbolSettingUpdate,
+        'symbol-setting-delete': handleSymbolSettingDelete,
+        'symbol-grid-trade-delete': handleSymbolGridTradeDelete,
+        'symbol-enable-action': handleSymbolEnableAction,
+        'symbol-trigger-buy': handleSymbolTriggerBuy,
+        'manual-trade': handleManualTrade,
+        'manual-trade-all-symbols': handleManualTradeAllSymbols,
+        'cancel-order': handleCancelOrder,
+        'dust-transfer-get': handleDustTransferGet,
+        'dust-transfer-execute': handleDustTransferExecute,
+        'symbol-backtest': handleSymbolBackTest,
+        'disconnect': handleDisconnect,
+        'past-trades-erase': handlePastTradesErase,
+        'verify-password': handlePassword,
+        'reset-factory-settings': handleResetFactorySettings
+      };
+
+      if (commandMaps[payload.command]) {
+        await commandMaps[payload.command](commandLogger, ws, payload);
+      } else {
+        handleWarning(logger, ws, 'Command is not recognised.');
       }
     });
 

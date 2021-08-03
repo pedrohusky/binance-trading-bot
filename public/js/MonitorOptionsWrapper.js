@@ -2,17 +2,8 @@
 /* eslint-disable react/jsx-no-undef */
 /* eslint-disable no-undef */
 class MonitorOptionsWrapper extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
   render() {
-    const { jsonStrings, searchKeyword, sortSymbols } = this.props;
-
-    if (_.isEmpty(jsonStrings)) {
-      return '';
-    }
-    const { profit_loss_wrapper, common_strings } = jsonStrings;
+    const { searchKeyword, sortSymbols } = this.props;
 
     return (
       <div className='accordion-wrapper profit-loss-accordion-wrapper'>

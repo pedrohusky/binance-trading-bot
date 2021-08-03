@@ -320,7 +320,7 @@ bot.hears(
     const cachedDate = JSON.parse(await cache.get(`last-seen-telegram`)) || {};
 
     // If cache is not set (at first init):
-    if (typeof cachedDate !== 'string') {
+    if (_.isEmpty(cachedDate)) {
       return ctx.reply(
         `Hey, it's your first time here, enjoy! 🤓`,
         mainMenuKeyboard

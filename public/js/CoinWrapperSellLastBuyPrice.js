@@ -12,18 +12,17 @@ class CoinWrapperSellLastBuyPrice extends React.Component {
       sell
     } = symbolInfo;
 
-    const { common_strings } = jsonStrings;
     const precision = parseFloat(tickSize) === 1 ? 0 : tickSize.indexOf(1) - 1;
 
     return (
       <div className='coin-info-column coin-info-column-price'>
         {sell.gridStrategyActivated ? (
           <span className='coin-info-label coin-info-label-with-icon'>
-            {common_strings.averaged_price}:
+            {jsonStrings[1].averaged_price}:
           </span>
         ) : (
           <span className='coin-info-label coin-info-label-with-icon'>
-            {common_strings.last_buy_price}:
+            {jsonStrings[1].last_buy_price}:
             <SymbolEditLastBuyPriceIcon
               symbolInfo={symbolInfo}
               sendWebSocket={sendWebSocket}

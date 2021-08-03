@@ -21,16 +21,14 @@ const execute = async (logger, rawData) => {
     },
     symbolConfiguration: {
       buy: {
-        triggerPercentage: buyTriggerPercentage,
-        limitPercentage: buyLimitPercentage
+        currentGridTradeIndex: currentBuyGridTradeIndex,
+        currentGridTrade: currentBuyGridTrade
       },
       sell: {
-        triggerPercentage: sellTriggerPercentage,
+        stopLoss: { maxLossPercentage: sellMaxLossPercentage },
         hardPercentage: sellHardTriggerPercentage,
-        limitPercentage: sellLimitPercentage,
-        stopLoss: { maxLossPercentage: sellMaxLossPercentage }
+        currentGridTrade: currentSellGridTrade
       },
-      botOptions: { calcFees },
       strategyOptions: {
         tradeOptions: { manyBuys },
         athRestriction: {
@@ -76,12 +74,40 @@ const execute = async (logger, rawData) => {
   // Cast string to number
   const { highestPrice, lowestPrice, athPrice, trend, prediction } =
     data.indicators;
+
+  // Get current price
   const currentPrice = parseFloat(cachedLatestCandle.close);
-  const buyTriggerPrice = lowestPrice * buyTriggerPercentage;
-  const buyDifference = (1 - currentPrice / buyTriggerPrice) * -100;
-  const buyLimitPrice = currentPrice * buyLimitPercentage;
+
+  // Get last buy price
+  const lastBuyPriceDoc = await getLastBuyPrice(logger, symbol);
+  const lastQuantityBought = _.get(lastBuyPriceDoc, 'quantity', null);
+  const lastBuyPrice = _.get(lastBuyPriceDoc, 'lastBuyPrice', null);
+  const lastBoughtPrice = _.get(lastBuyPriceDoc, 'lastBoughtPrice', null);
 
   const precision = parseFloat(tickSize) === 1 ? 0 : tickSize.indexOf(1) - 1;
+
+  // #### Buy related variables
+  // Set trigger price to be null which will prevent to buy.
+  let buyTriggerPrice = null;
+  let buyDifference = null;
+  let buyLimitPrice = null;
+  if (currentBuyGridTrade !== null) {
+    const {
+      triggerPercentage: buyTriggerPercentage,
+      limitPercentage: buyLimitPercentage
+    } = currentBuyGridTrade;
+
+    // If grid trade index is 0 or last buy price is null, then use lowest price as trigger price.
+    // If grid trade index is not 0 and last buy price is not null, then use last buy price
+    const triggerPrice =
+      currentBuyGridTradeIndex !== 0 && lastBuyPrice !== null
+        ? lastBuyPrice
+        : lowestPrice;
+
+    buyTriggerPrice = triggerPrice * buyTriggerPercentage;
+    buyDifference = (1 - currentPrice / buyTriggerPrice) * -100;
+    buyLimitPrice = currentPrice * buyLimitPercentage;
+  }
 
   if (
     !_.isEmpty(prediction) &&
@@ -89,8 +115,10 @@ const execute = async (logger, rawData) => {
     !_.isEmpty(prediction.realCandles)
   )
     for (let i = 0; i < prediction.predictedValues.length; i += 1) {
-      prediction.predictedValues[i] =
-        prediction.predictedValues[i].toFixed(precision);
+      if (prediction.predictedValues[i] !== undefined) {
+        prediction.predictedValues[i] =
+          prediction.predictedValues[i].toFixed(precision);
+      }
       prediction.realCandles[i] = prediction.realCandles[i].toFixed(precision);
     }
 
@@ -100,46 +128,30 @@ const execute = async (logger, rawData) => {
     buyATHRestrictionPrice = athPrice * buyATHRestrictionPercentage;
   }
 
-  // Get last buy price
-  const lastBuyPriceDoc = await getLastBuyPrice(logger, symbol);
-  const lastQuantityBought = _.get(lastBuyPriceDoc, 'quantity', null);
-  const lastBuyPrice = _.get(lastBuyPriceDoc, 'lastBuyPrice', null);
-  const lastBoughtPrice = _.get(lastBuyPriceDoc, 'lastBoughtPrice', null);
+  // #### Sell related variables
+  // Set trigger price to be null which will prevent to sell.
+  let sellTriggerPrice = null;
+  let sellDifference = null;
+  let sellLimitPrice = null;
 
-  let feeMultiplier = {
-    roundUp: 1,
-    roundDown: 1
-  };
+  if (lastBuyPrice > 0 && currentSellGridTrade !== null) {
+    const {
+      triggerPercentage: sellTriggerPercentage,
+      limitPercentage: sellLimitPercentage
+    } = currentSellGridTrade;
 
-  if (calcFees) {
-    feeMultiplier = {
-      roundUp: 1.002,
-      roundDown: 0.998
-    };
+    sellTriggerPrice = lastBuyPrice * sellTriggerPercentage;
+    sellDifference = (1 - sellTriggerPrice / currentPrice) * 100;
+    sellLimitPrice = currentPrice * sellLimitPercentage;
   }
-
-  const sellTriggerPrice =
-    lastBuyPrice > 0
-      ? lastBuyPrice * sellTriggerPercentage * feeMultiplier.roundUp
-      : null;
-  const sellHardTriggerPrice =
-    lastBuyPrice > 0
-      ? lastBuyPrice * sellHardTriggerPercentage * feeMultiplier.roundUp
-      : null;
-  const sellDifference =
-    lastBuyPrice > 0 ? (1 - sellTriggerPrice / currentPrice) * 100 : null;
-  const sellLimitPrice = currentPrice * sellLimitPercentage;
+  // ##############################
 
   // Get stop loss trigger price
   const sellStopLossTriggerPrice =
-    lastBuyPrice > 0
-      ? lastBuyPrice * sellMaxLossPercentage * feeMultiplier.roundUp
-      : null;
+    lastBuyPrice > 0 ? lastBuyPrice * sellMaxLossPercentage : null;
   const sellStopLossDifference =
     lastBuyPrice > 0
-      ? (1 -
-          (sellStopLossTriggerPrice / currentPrice) * feeMultiplier.roundDown) *
-        100
+      ? (1 - sellStopLossTriggerPrice / currentPrice) * 100
       : null;
 
   // Estimate value
@@ -149,17 +161,16 @@ const execute = async (logger, rawData) => {
 
   const sellCurrentProfit =
     lastBuyPrice > 0
-      ? (currentPrice - lastBuyPrice) *
-        feeMultiplier.roundUp *
-        baseAssetTotalBalance
+      ? (currentPrice - lastBuyPrice) * baseAssetTotalBalance
       : null;
 
   const sellCurrentProfitPercentage =
-    lastBuyPrice > 0
-      ? (1 - (lastBuyPrice / currentPrice) * feeMultiplier.roundUp) * 100
-      : null;
+    lastBuyPrice > 0 ? (1 - lastBuyPrice / currentPrice) * 100 : null;
 
-  // Reorganize open orders
+  const sellHardTriggerPrice =
+    lastBuyPrice > 0 ? lastBuyPrice * sellHardTriggerPercentage : null;
+
+  // Reorganise open orders
   const newOpenOrders = openOrders.map(order => {
     const newOrder = order;
     newOrder.currentPrice = currentPrice;
@@ -170,22 +181,22 @@ const execute = async (logger, rawData) => {
     }
 
     if (order.side.toLowerCase() === 'buy') {
-      newOrder.limitPrice = buyLimitPrice;
-      newOrder.limitPercentage = buyLimitPercentage;
       newOrder.differenceToExecute =
         (1 - parseFloat(order.stopPrice / currentPrice)) * 100;
 
       newOrder.differenceToCancel =
-        (1 - parseFloat(order.stopPrice / buyLimitPrice)) * 100;
+        buyLimitPrice > 0
+          ? (1 - parseFloat(order.stopPrice / buyLimitPrice)) * 100
+          : null;
     }
 
     if (order.side.toLowerCase() === 'sell') {
-      newOrder.limitPrice = sellLimitPrice;
-      newOrder.limitPercentage = sellLimitPercentage;
       newOrder.differenceToExecute =
         (1 - parseFloat(order.stopPrice / currentPrice)) * 100;
       newOrder.differenceToCancel =
-        (1 - parseFloat(order.stopPrice / sellLimitPrice)) * 100;
+        sellLimitPrice > 0
+          ? (1 - parseFloat(order.stopPrice / sellLimitPrice)) * 100
+          : null;
 
       newOrder.minimumProfit = null;
       newOrder.minimumProfitPercentage = null;

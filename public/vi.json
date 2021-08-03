@@ -228,7 +228,7 @@
   },
   "symbol_delete": {
     "remove_symbol": "Xóa biểu tượng",
-    "_description": {
+    "symbol_delete_description": {
       "1": "Bạn có chắc chắn muốn xóa biểu tượng khỏi bộ nhớ cache không?",
       "2": "Lưu ý rằng điều này sẽ chỉ xóa các giá trị được lưu trong bộ nhớ cache.",
       "3": "Nếu biểu tượng vẫn đang được theo dõi, nó sẽ xuất hiện trở lại."

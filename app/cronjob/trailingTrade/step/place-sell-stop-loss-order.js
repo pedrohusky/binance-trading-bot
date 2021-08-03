@@ -169,6 +169,7 @@ const execute = async (logger, rawData) => {
 
     if (action === 'sell-stop-loss') {
       messenger.sendMessage(symbol, null, 'SELL_STOP_LOSS');
+
       // Temporary disable action
       await disableAction(
         symbol,

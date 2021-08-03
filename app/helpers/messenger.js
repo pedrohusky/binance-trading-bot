@@ -44,9 +44,11 @@ const sendMessage = async (symbol = null, lastOrder = null, action) => {
         symbol +
         '\n' +
         send_message.place_buy[3] +
+        ' ' +
         quantity +
         '\n' +
         send_message.place_buy[4] +
+        ' ' +
         price;
       break;
 
@@ -68,9 +70,11 @@ const sendMessage = async (symbol = null, lastOrder = null, action) => {
         symbol +
         '\n' +
         send_message.place_sell[3] +
+        ' ' +
         quantity +
         '\n' +
         send_message.place_sell[4] +
+        ' ' +
         price;
       break;
 
@@ -148,12 +152,8 @@ const sendMessage = async (symbol = null, lastOrder = null, action) => {
 };
 
 const errorMessage = text => {
-  if (globalConfiguration.botOptions.slack === true) {
-    slack.notifySlack(text);
-  }
-  if (globalConfiguration.botOptions.telegram === true) {
-    telegram.notifyTelegram(text);
-  }
+  slack.notifySlack(text);
+  telegram.notifyTelegram(text);
 };
 
 module.exports = { sendMessage, errorMessage, updateConfiguration };

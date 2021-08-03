@@ -16,7 +16,6 @@ class PastTradesWrapper extends React.Component {
     if (_.isEmpty(jsonStrings)) {
       return '';
     }
-    const { past_trades } = jsonStrings;
 
     let finalProfit = 0;
 
@@ -66,16 +65,9 @@ class PastTradesWrapper extends React.Component {
       );
     });
 
-    let multiplier = 0;
-    if (wins - losses > 0) {
-      multiplier = 100;
-    } else {
-      multiplier = -100;
-    }
-
     // Store 0 win percent when no past trades
     if (pastTrades.length === 0) {
-      winPercent = 0
+      winPercent = 0;
     } else {
       winPercent = ((wins / pastTrades.length) * 100).toFixed(2);
     }
@@ -96,7 +88,7 @@ class PastTradesWrapper extends React.Component {
               <div className='d-flex flex-row justify-content-between'>
                 <div className='flex-column-left'>
                   <div className='btn-profit-loss text-uppercase font-weight-bold'>
-                    {past_trades.past_trades+' '}
+                    {jsonStrings.jsonStrings + ' '}
                   </div>
                 </div>
                 <div className='flex-column-right pt-2'>
@@ -104,8 +96,11 @@ class PastTradesWrapper extends React.Component {
                 </div>
                 <div className='flex-column-right pt-2'>
                   <span className='profit-loss-asset'>
-                    {past_trades.trades+": "+pastTrades.length} | {past_trades.wins+": "+ wins} / {past_trades.losses+': '+losses +" | "}
-                     {past_trades.success_rate+": "+winPercent}% | {past_trades.overall_profit+': '}
+                    {jsonStrings.trades + ': ' + pastTrades.length} |{' '}
+                    {jsonStrings.wins + ': ' + wins} /{' '}
+                    {jsonStrings.losses + ': ' + losses + ' | '}
+                    {jsonStrings.success_rate + ': ' + winPercent}% |{' '}
+                    {jsonStrings.overall_profit + ': '}
                   </span>
                   <span className={'profit-loss-value' + classNameExt}>
                     {' '}

@@ -43,7 +43,11 @@ class CoinWrapperChart extends React.Component {
       const labels = [];
       const pointPredictedColors = [];
       const pointRealColors = [];
-      for (let index = 0; index < prediction.predictedValues.length; index++) {
+      for (
+        let index = 0;
+        index < prediction.predictedValues.length;
+        index += 1
+      ) {
         labels.push('Prediction Nº' + (index + 1));
 
         if (prediction.predictedValues[index] === minPredicted) {
@@ -159,14 +163,18 @@ class CoinWrapperChart extends React.Component {
             className='btn btn-sm btn-link p-0 ml-1'
             onClick={this.toggleCollapse}>
             <i
-              className={`fa ${
+              className={`fas ${
                 collapsed ? 'fa-arrow-right' : 'fa-arrow-down'
               }`}></i>
           </button>
         </div>
         <div
           className={`coin-info-content-setting ${collapsed ? 'd-none' : ''}`}>
-          <canvas className='graph' id={'Graph' + symbolInfo.symbol}></canvas>
+          {symbolInfo.symbolConfiguration.buy.predictValue ? (
+            <canvas className='graph' id={'Graph' + symbolInfo.symbol}></canvas>
+          ) : (
+            <span>Prediction is disabled. Enable it to see the chart.</span>
+          )}
         </div>
       </div>
     );

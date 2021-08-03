@@ -29,7 +29,6 @@ class CoinWrapperSymbol extends React.Component {
       sendWebSocket,
       jsonStrings
     } = this.props;
-
     return (
       <div className='coin-info-sub-wrapper coin-info-sub-wrapper-symbol'>
         <div className='coin-info-column coin-info-column-name'>
@@ -62,7 +61,7 @@ class CoinWrapperSymbol extends React.Component {
           />
         </div>
         <div className='coin-info-column coin-info-column-icon'>
-          <CoinWrapperManualTrade
+          <SymbolManualTradeIcon
             symbol={symbol}
             lastCandle={lastCandle}
             baseAssetPrecision={baseAssetPrecision}

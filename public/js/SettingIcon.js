@@ -17,7 +17,9 @@ class SettingIcon extends React.Component {
       showResetModal: false,
       availableSymbols: [],
       quoteAssets: [],
-      configuration: {}
+      minNotionals: {},
+      configuration: {},
+      validation: {}
     };
 
     this.handleModalShow = this.handleModalShow.bind(this);
@@ -26,22 +28,24 @@ class SettingIcon extends React.Component {
     this.handleFormSubmit = this.handleFormSubmit.bind(this);
     this.handleResetSettings = this.handleResetSettings.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
-    this.handleMaxPurchaeAmountChange =
-      this.handleMaxPurchaeAmountChange.bind(this);
     this.handleMinPurchaeAmountChange =
       this.handleMinPurchaeAmountChange.bind(this);
+    this.handleGridTradeChange = this.handleGridTradeChange.bind(this);
     this.handleLastBuyPriceRemoveThresholdChange =
       this.handleLastBuyPriceRemoveThresholdChange.bind(this);
+
+    this.handleSetValidation = this.handleSetValidation.bind(this);
   }
 
   getQuoteAssets(
     exchangeSymbols,
     selectedSymbols,
-    maxPurchaseAmounts,
     lastBuyPriceRemoveThresholds,
     minPurchaseAmounts
   ) {
     const quoteAssets = [];
+
+    const minNotionals = {};
 
     selectedSymbols.forEach(symbol => {
       const symbolInfo = exchangeSymbols[symbol];
@@ -51,26 +55,20 @@ class SettingIcon extends React.Component {
       const { quoteAsset, minNotional } = symbolInfo;
       if (quoteAssets.includes(quoteAsset) === false) {
         quoteAssets.push(quoteAsset);
+        minNotionals[quoteAsset] = minNotional;
       }
-      if (maxPurchaseAmounts[quoteAsset] === undefined) {
-        maxPurchaseAmounts[quoteAsset] = minNotional * 10;
-      }
+
       if (lastBuyPriceRemoveThresholds[quoteAsset] === undefined) {
         lastBuyPriceRemoveThresholds[quoteAsset] = minNotional;
       }
-
       if (minPurchaseAmounts[quoteAsset] === undefined) {
-        //Define min purchase amount to be min notional + 10% when not set.
-        // (+10% to not easily lose its last buy price if is closer to 10 the max purchase amount)
-        minPurchaseAmounts[quoteAsset] = (minNotional * 1.1).toFixed(
-          minNotional.length
-        );
+        minPurchaseAmounts[quoteAsset] = minNotional * 1.1;
       }
     });
 
     return {
       quoteAssets,
-      maxPurchaseAmounts,
+      minNotionals,
       lastBuyPriceRemoveThresholds,
       minPurchaseAmounts
     };
@@ -95,31 +93,26 @@ class SettingIcon extends React.Component {
         []
       );
 
-      if (configuration.buy.maxPurchaseAmounts === undefined) {
-        configuration.buy.maxPurchaseAmounts = {};
-      }
       if (configuration.buy.lastBuyPriceRemoveThresholds === undefined) {
         configuration.buy.lastBuyPriceRemoveThresholds = {};
       }
+
       if (configuration.buy.minPurchaseAmounts === undefined) {
         configuration.buy.minPurchaseAmounts = {};
       }
 
-      // Set max purchase amount
       const {
         quoteAssets,
-        maxPurchaseAmounts,
+        minNotionals,
         lastBuyPriceRemoveThresholds,
         minPurchaseAmounts
       } = this.getQuoteAssets(
         exchangeSymbols,
         selectedSymbols,
-        configuration.buy.maxPurchaseAmounts,
         configuration.buy.lastBuyPriceRemoveThresholds,
         configuration.buy.minPurchaseAmounts
       );
 
-      configuration.buy.maxPurchaseAmounts = maxPurchaseAmounts;
       configuration.buy.lastBuyPriceRemoveThresholds =
         lastBuyPriceRemoveThresholds;
       configuration.buy.minPurchaseAmounts = minPurchaseAmounts;
@@ -127,6 +120,7 @@ class SettingIcon extends React.Component {
       this.setState({
         availableSymbols,
         quoteAssets,
+        minNotionals,
         configuration
       });
     }
@@ -178,16 +172,11 @@ class SettingIcon extends React.Component {
       configuration: _.set(configuration, stateKey, value)
     });
   }
-
-  handleMaxPurchaeAmountChange(newMaxPurchaseAmounts) {
+  handleGridTradeChange(type, newGrid) {
     const { configuration } = this.state;
 
     this.setState({
-      configuration: _.set(
-        configuration,
-        'buy.maxPurchaseAmounts',
-        newMaxPurchaseAmounts
-      )
+      configuration: _.set(configuration, `${type}.gridTrade`, newGrid)
     });
   }
 
@@ -220,8 +209,19 @@ class SettingIcon extends React.Component {
     });
   }
 
+  handleSetValidation(type, isValid) {
+    const { validation } = this.state;
+    this.setState({ validation: { ...validation, [type]: isValid } });
+  }
+
   render() {
-    const { configuration, availableSymbols, quoteAssets } = this.state;
+    const {
+      configuration,
+      availableSymbols,
+      quoteAssets,
+      minNotionals,
+      validation
+    } = this.state;
     const { jsonStrings } = this.props;
     const { symbols: selectedSymbols } = configuration;
 
@@ -229,7 +229,8 @@ class SettingIcon extends React.Component {
       return '';
     }
 
-    const { setting_icon, common_strings } = jsonStrings;
+    // Check validation if contains any false
+    const isValid = Object.values(validation).includes(false) === false;
 
     return (
       <div className='header-column-icon-wrapper setting-wrapper'>
@@ -237,7 +238,7 @@ class SettingIcon extends React.Component {
           type='button'
           className='btn btn-sm btn-link p-0 pl-1 pr-1'
           onClick={() => this.handleModalShow('setting')}>
-          <i className='fa fa-cog'></i>
+          <i className='fas fa-cog'></i>
         </button>
         <Modal
           show={this.state.showSettingModal}
@@ -245,11 +246,11 @@ class SettingIcon extends React.Component {
           size='xl'>
           <Form>
             <Modal.Header className='pt-1 pb-1'>
-              <Modal.Title>{setting_icon.global_settings}</Modal.Title>
+              <Modal.Title>{jsonStrings[0].global_settings}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
               <span className='text-muted'>
-                {setting_icon.global_settings_description}
+                {jsonStrings[0].global_settings_description}
               </span>
               <Accordion className='accordion-wrapper' defaultActiveKey='0'>
                 <Card className='mt-1' style={{ overflow: 'visible' }}>
@@ -259,7 +260,7 @@ class SettingIcon extends React.Component {
                       variant='link'
                       eventKey='0'
                       className='p-0 fs-7 text-uppercase'>
-                      {setting_icon._symbols}
+                      {jsonStrings[0]._symbols}
                     </Accordion.Toggle>
                   </Card.Header>
                   <Accordion.Collapse eventKey='0'>
@@ -278,31 +279,37 @@ class SettingIcon extends React.Component {
 
                                 const {
                                   quoteAssets,
-                                  maxPurchaseAmounts,
+                                  minNotionals,
                                   lastBuyPriceRemoveThresholds,
                                   minPurchaseAmounts
                                 } = this.getQuoteAssets(
                                   exchangeSymbols,
                                   selected,
-                                  configuration.buy.maxPurchaseAmounts,
                                   configuration.buy
                                     .lastBuyPriceRemoveThresholds,
                                   configuration.buy.minPurchaseAmounts
                                 );
 
-                                configuration.buy.maxPurchaseAmounts =
-                                  maxPurchaseAmounts;
+                                console.log('Typeahead quoteAssets => ', {
+                                  quoteAssets,
+                                  minNotionals
+                                });
+
                                 configuration.buy.lastBuyPriceRemoveThresholds =
                                   lastBuyPriceRemoveThresholds;
                                 configuration.buy.minPurchaseAmounts =
                                   minPurchaseAmounts;
-                                this.setState({ configuration, quoteAssets });
+                                this.setState({
+                                  configuration,
+                                  quoteAssets,
+                                  minNotionals
+                                });
                               }}
                               size='sm'
                               options={availableSymbols}
                               defaultSelected={selectedSymbols}
                               placeholder={
-                                setting_icon.placeholder_monitor_symbols
+                                jsonStrings[0].placeholder_monitor_symbols
                               }
                             />
                           </Form.Group>
@@ -321,7 +328,7 @@ class SettingIcon extends React.Component {
                       variant='link'
                       eventKey='0'
                       className='p-0 fs-7 text-uppercase'>
-                      {setting_icon.candle_settings}
+                      {jsonStrings[0].candle_settings}
                     </Accordion.Toggle>
                   </Card.Header>
                   <Accordion.Collapse eventKey='0'>
@@ -332,7 +339,7 @@ class SettingIcon extends React.Component {
                             controlId='field-candles-interval'
                             className='mb-2'>
                             <Form.Label className='mb-0'>
-                              {common_strings._interval}
+                              {jsonStrings[1]._interval}
                               <OverlayTrigger
                                 trigger='click'
                                 key='interval-overlay'
@@ -340,14 +347,17 @@ class SettingIcon extends React.Component {
                                 overlay={
                                   <Popover id='interval-overlay-right'>
                                     <Popover.Content>
-                                      {setting_icon.candle_interval_description}
+                                      {
+                                        jsonStrings[0]
+                                          .candle_interval_description
+                                      }
                                     </Popover.Content>
                                   </Popover>
                                 }>
                                 <Button
                                   variant='link'
                                   className='p-0 m-0 ml-1 text-info'>
-                                  <i className='fa fa-question-circle'></i>
+                                  <i className='fas fa-question-circle fa-sm'></i>
                                 </Button>
                               </OverlayTrigger>
                             </Form.Label>
@@ -375,7 +385,7 @@ class SettingIcon extends React.Component {
                             controlId='field-candles-limit'
                             className='mb-2'>
                             <Form.Label className='mb-0'>
-                              {common_strings._limit}
+                              {jsonStrings[1]._limit}
                               <OverlayTrigger
                                 trigger='click'
                                 key='limit-overlay'
@@ -383,14 +393,14 @@ class SettingIcon extends React.Component {
                                 overlay={
                                   <Popover id='limit-overlay-right'>
                                     <Popover.Content>
-                                      {setting_icon.candle_limit_description}
+                                      {jsonStrings[0].candle_limit_description}
                                     </Popover.Content>
                                   </Popover>
                                 }>
                                 <Button
                                   variant='link'
                                   className='p-0 m-0 ml-1 text-info'>
-                                  <i className='fa fa-question-circle'></i>
+                                  <i className='fas fa-question-circle fa-sm'></i>
                                 </Button>
                               </OverlayTrigger>
                             </Form.Label>
@@ -398,7 +408,7 @@ class SettingIcon extends React.Component {
                               size='sm'
                               type='number'
                               placeholder={
-                                setting_icon.placeholder_enter_limit_price
+                                jsonStrings[0].placeholder_enter_limit_price
                               }
                               required
                               min='0'
@@ -425,7 +435,7 @@ class SettingIcon extends React.Component {
                           variant='link'
                           eventKey='0'
                           className='p-0 fs-7 text-uppercase'>
-                          {common_strings._buy}
+                          {jsonStrings[1]._buy}
                         </Accordion.Toggle>
                       </Card.Header>
                       <Accordion.Collapse eventKey='0'>
@@ -443,7 +453,7 @@ class SettingIcon extends React.Component {
                                     onChange={this.handleInputChange}
                                   />
                                   <Form.Check.Label>
-                                    {common_strings.trading_enabled}{' '}
+                                    {jsonStrings[1].trading_enabled}{' '}
                                     <OverlayTrigger
                                       trigger='click'
                                       key='buy-enabled-overlay'
@@ -452,7 +462,8 @@ class SettingIcon extends React.Component {
                                         <Popover id='buy-enabled-overlay-right'>
                                           <Popover.Content>
                                             {
-                                              setting_icon.trading_enabled_description
+                                              jsonStrings[0]
+                                                .trading_enabled_description
                                             }
                                           </Popover.Content>
                                         </Popover>
@@ -460,12 +471,26 @@ class SettingIcon extends React.Component {
                                       <Button
                                         variant='link'
                                         className='p-0 m-0 ml-1 text-info'>
-                                        <i className='fa fa-question-circle'></i>
+                                        <i className='fas fa-question-circle fa-sm'></i>
                                       </Button>
                                     </OverlayTrigger>
                                   </Form.Check.Label>
                                 </Form.Check>
                               </Form.Group>
+                            </div>
+                            <div className='col-12'>
+                              <SettingIconGridBuy
+                                gridTrade={configuration.buy.gridTrade}
+                                quoteAssets={quoteAssets}
+                                minNotionals={minNotionals}
+                                handleSetValidation={this.handleSetValidation}
+                                handleGridTradeChange={
+                                  this.handleGridTradeChange
+                                }
+                              />
+                            </div>
+                            <div className='col-12'>
+                              <hr />
                             </div>
                             <div className='col-6'>
                               <SettingIconMinPurchaseAmount
@@ -480,18 +505,6 @@ class SettingIcon extends React.Component {
                               />
                             </div>
                             <div className='col-6'>
-                              <SettingIconMaxPurchaseAmount
-                                quoteAssets={quoteAssets}
-                                maxPurchaseAmounts={
-                                  configuration.buy.maxPurchaseAmounts
-                                }
-                                jsonStrings={jsonStrings}
-                                handleMaxPurchaeAmountChange={
-                                  this.handleMaxPurchaeAmountChange
-                                }
-                              />
-                            </div>
-                            <div className='col-12'>
                               <SettingIconLastBuyPriceRemoveThreshold
                                 quoteAssets={quoteAssets}
                                 lastBuyPriceRemoveThresholds={
@@ -502,181 +515,6 @@ class SettingIcon extends React.Component {
                                   this.handleLastBuyPriceRemoveThresholdChange
                                 }
                               />
-                            </div>
-                          </div>
-                          <div className='row'>
-                            <div className='col-6'>
-                              <Form.Group
-                                controlId='field-buy-stop-percentage'
-                                className='mb-2'>
-                                <Form.Label className='mb-0'>
-                                  {common_strings.stop_price_percent}{' '}
-                                  <OverlayTrigger
-                                    trigger='click'
-                                    key='buy-stop-price-percentage-overlay'
-                                    placement='bottom'
-                                    overlay={
-                                      <Popover id='buy-stop-price-percentage-overlay-right'>
-                                        <Popover.Content>
-                                          {
-                                            setting_icon.stop_price_percent_description
-                                          }
-                                        </Popover.Content>
-                                      </Popover>
-                                    }>
-                                    <Button
-                                      variant='link'
-                                      className='p-0 m-0 ml-1 text-info'>
-                                      <i className='fa fa-question-circle'></i>
-                                    </Button>
-                                  </OverlayTrigger>
-                                </Form.Label>
-                                <Form.Label
-                                  htmlFor='field-min-buy-stop-price-percentage'
-                                  srOnly>
-                                  {common_strings._quantity}
-                                </Form.Label>
-                                <InputGroup size='sm'>
-                                  <FormControl
-                                    size='sm'
-                                    type='number'
-                                    placeholder={
-                                      setting_icon.placeholder_enter_stop_price
-                                    }
-                                    required
-                                    min='0'
-                                    step='0.0001'
-                                    data-state-key='buy.stopPercentage'
-                                    value={configuration.buy.stopPercentage}
-                                    onChange={this.handleInputChange}
-                                  />
-                                  <InputGroup.Append>
-                                    <InputGroup.Text>
-                                      {(
-                                        configuration.buy.stopPercentage * 100 -
-                                        100
-                                      ).toFixed(2)}
-                                      %
-                                    </InputGroup.Text>
-                                  </InputGroup.Append>
-                                </InputGroup>
-                              </Form.Group>
-                            </div>
-                            <div className='col-6'>
-                              <Form.Group
-                                controlId='field-buy-limit-percentage'
-                                className='mb-2'>
-                                <Form.Label className='mb-0'>
-                                  {common_strings.limit_price_percent}{' '}
-                                  <OverlayTrigger
-                                    trigger='click'
-                                    key='interval-overlay'
-                                    placement='bottom'
-                                    overlay={
-                                      <Popover id='interval-overlay-right'>
-                                        <Popover.Content>
-                                          {
-                                            setting_icon.limit_price_percent_description
-                                          }
-                                        </Popover.Content>
-                                      </Popover>
-                                    }>
-                                    <Button
-                                      variant='link'
-                                      className='p-0 m-0 ml-1 text-info'>
-                                      <i className='fa fa-question-circle'></i>
-                                    </Button>
-                                  </OverlayTrigger>
-                                </Form.Label>
-                                <Form.Label
-                                  htmlFor='field-min-buy-limit-percentage'
-                                  srOnly>
-                                  {common_strings._quantity}
-                                </Form.Label>
-                                <InputGroup size='sm'>
-                                  <FormControl
-                                    size='sm'
-                                    type='number'
-                                    placeholder={
-                                      setting_icon.placeholder_enter_limit_price
-                                    }
-                                    required
-                                    min='0'
-                                    step='0.0001'
-                                    data-state-key='buy.limitPercentage'
-                                    value={configuration.buy.limitPercentage}
-                                    onChange={this.handleInputChange}
-                                  />
-                                  <InputGroup.Append>
-                                    <InputGroup.Text>
-                                      {(
-                                        configuration.buy.limitPercentage *
-                                          100 -
-                                        100
-                                      ).toFixed(2)}
-                                      %
-                                    </InputGroup.Text>
-                                  </InputGroup.Append>
-                                </InputGroup>
-                              </Form.Group>
-                            </div>
-                            <div className='col-12'>
-                              <Form.Group
-                                controlId='field-buy-trigger-percentage'
-                                className='mb-2'>
-                                <Form.Label className='mb-0'>
-                                  {setting_icon.trigger_percent_buy}{' '}
-                                  <OverlayTrigger
-                                    trigger='click'
-                                    key='buy-trigger-percentage-overlay'
-                                    placement='bottom'
-                                    overlay={
-                                      <Popover id='buy-trigger-percentage-overlay-right'>
-                                        <Popover.Content>
-                                          {
-                                            setting_icon.trigger_percent_buy_description
-                                          }
-                                        </Popover.Content>
-                                      </Popover>
-                                    }>
-                                    <Button
-                                      variant='link'
-                                      className='p-0 m-0 ml-1 text-info'>
-                                      <i className='fa fa-question-circle'></i>
-                                    </Button>
-                                  </OverlayTrigger>
-                                </Form.Label>
-                                <Form.Label
-                                  htmlFor='field-min-sell-stop-loss-percentage'
-                                  srOnly>
-                                  {common_strings._quantity}
-                                </Form.Label>
-                                <InputGroup size='sm'>
-                                  <FormControl
-                                    size='sm'
-                                    type='number'
-                                    placeholder={
-                                      setting_icon.placeholder_trigger_percent
-                                    }
-                                    required
-                                    min='0'
-                                    step='0.0001'
-                                    data-state-key='buy.triggerPercentage'
-                                    value={configuration.buy.triggerPercentage}
-                                    onChange={this.handleInputChange}
-                                  />
-                                  <InputGroup.Append>
-                                    <InputGroup.Text>
-                                      {(
-                                        (configuration.buy.triggerPercentage -
-                                          1) *
-                                        100
-                                      ).toFixed(2)}
-                                      %
-                                    </InputGroup.Text>
-                                  </InputGroup.Append>
-                                </InputGroup>
-                              </Form.Group>
                             </div>
                           </div>
                         </Card.Body>
@@ -694,7 +532,7 @@ class SettingIcon extends React.Component {
                           variant='link'
                           eventKey='0'
                           className='p-0 fs-7 text-uppercase'>
-                          {common_strings._sell}
+                          {jsonStrings[1]._sell}
                         </Accordion.Toggle>
                       </Card.Header>
                       <Accordion.Collapse eventKey='0'>
@@ -712,7 +550,7 @@ class SettingIcon extends React.Component {
                                     onChange={this.handleInputChange}
                                   />
                                   <Form.Check.Label>
-                                    {common_strings.trading_enabled}{' '}
+                                    {jsonStrings[1].trading_enabled}{' '}
                                     <OverlayTrigger
                                       trigger='click'
                                       key='sell-enabled-overlay'
@@ -721,7 +559,8 @@ class SettingIcon extends React.Component {
                                         <Popover id='sell-enabled-overlay-right'>
                                           <Popover.Content>
                                             {
-                                              setting_icon.trading_enabled_description_sell
+                                              jsonStrings[0]
+                                                .trading_enabled_description_sell
                                             }
                                           </Popover.Content>
                                         </Popover>
@@ -729,344 +568,169 @@ class SettingIcon extends React.Component {
                                       <Button
                                         variant='link'
                                         className='p-0 m-0 ml-1 text-info'>
-                                        <i className='fa fa-question-circle'></i>
+                                        <i className='fas fa-question-circle fa-sm'></i>
                                       </Button>
                                     </OverlayTrigger>
                                   </Form.Check.Label>
                                 </Form.Check>
                               </Form.Group>
                             </div>
-
-                            <div className='col-6'>
-                              <Form.Group
-                                controlId='field-sell-stop-percentage'
-                                className='mb-2'>
-                                <Form.Label className='mb-0'>
-                                  {common_strings.stop_price_percent}{' '}
-                                  <OverlayTrigger
-                                    trigger='click'
-                                    key='sell-stop-price-percentage-overlay'
-                                    placement='bottom'
-                                    overlay={
-                                      <Popover id='sell-stop-price-percentage-overlay-right'>
-                                        <Popover.Content>
-                                          {
-                                            setting_icon.stop_price_percent_description_sell
-                                          }
-                                        </Popover.Content>
-                                      </Popover>
-                                    }>
-                                    <Button
-                                      variant='link'
-                                      className='p-0 m-0 ml-1 text-info'>
-                                      <i className='fa fa-question-circle'></i>
-                                    </Button>
-                                  </OverlayTrigger>
-                                </Form.Label>
-                                <Form.Label
-                                  htmlFor='field-min-sell-stop-price-percentage'
-                                  srOnly>
-                                  {common_strings._quantity}
-                                </Form.Label>
-                                <InputGroup size='sm'>
-                                  <FormControl
-                                    size='sm'
-                                    type='number'
-                                    placeholder={
-                                      setting_icon.placeholder_enter_stop_price
-                                    }
-                                    required
-                                    min='0'
-                                    step='0.0001'
-                                    data-state-key='sell.stopPercentage'
-                                    value={configuration.sell.stopPercentage}
-                                    onChange={this.handleInputChange}
-                                  />
-                                  <InputGroup.Append>
-                                    <InputGroup.Text>
-                                      {(
-                                        configuration.sell.stopPercentage *
-                                          100 -
-                                        100
-                                      ).toFixed(2)}
-                                      %
-                                    </InputGroup.Text>
-                                  </InputGroup.Append>
-                                </InputGroup>
-                              </Form.Group>
-                            </div>
-                            <div className='col-6'>
-                              <Form.Group
-                                controlId='field-sell-limit-percentage'
-                                className='mb-2'>
-                                <Form.Label className='mb-0'>
-                                  {common_strings.limit_price_percent}{' '}
-                                  <OverlayTrigger
-                                    trigger='click'
-                                    key='sell-limit-price-percentage-overlay'
-                                    placement='bottom'
-                                    overlay={
-                                      <Popover id='sell-limit-price-percentage-overlay-right'>
-                                        <Popover.Content>
-                                          {
-                                            setting_icon.limit_price_percent_description_sell
-                                          }
-                                        </Popover.Content>
-                                      </Popover>
-                                    }>
-                                    <Button
-                                      variant='link'
-                                      className='p-0 m-0 ml-1 text-info'>
-                                      <i className='fa fa-question-circle'></i>
-                                    </Button>
-                                  </OverlayTrigger>
-                                </Form.Label>
-                                <Form.Label
-                                  htmlFor='field-min-sell-limit-price-percentage'
-                                  srOnly>
-                                  {common_strings._quantity}
-                                </Form.Label>
-                                <InputGroup size='sm'>
-                                  <FormControl
-                                    size='sm'
-                                    type='number'
-                                    placeholder={
-                                      setting_icon.placeholder_enter_limit_price
-                                    }
-                                    required
-                                    min='0'
-                                    step='0.0001'
-                                    data-state-key='sell.limitPercentage'
-                                    value={configuration.sell.limitPercentage}
-                                    onChange={this.handleInputChange}
-                                  />
-                                  <InputGroup.Append>
-                                    <InputGroup.Text>
-                                      {(
-                                        configuration.sell.limitPercentage *
-                                          100 -
-                                        100
-                                      ).toFixed(2)}
-                                      %
-                                    </InputGroup.Text>
-                                  </InputGroup.Append>
-                                </InputGroup>
-                              </Form.Group>
+                            <div className='col-12'>
+                              <SettingIconGridSell
+                                gridTrade={configuration.sell.gridTrade}
+                                quoteAssets={quoteAssets}
+                                handleSetValidation={this.handleSetValidation}
+                                handleGridTradeChange={
+                                  this.handleGridTradeChange
+                                }
+                              />
                             </div>
                             <div className='col-12'>
-                              <Form.Group
-                                controlId='field-sell-last-buy-percentage'
-                                className='mb-2'>
-                                <Form.Label className='mb-0'>
-                                  {setting_icon.trigger_percent_sell}{' '}
-                                  <OverlayTrigger
-                                    trigger='click'
-                                    key='sell-trigger-percentage-overlay'
-                                    placement='bottom'
-                                    overlay={
-                                      <Popover id='sell-trigger-percentage-overlay-right'>
-                                        <Popover.Content>
-                                          {
-                                            setting_icon.trigger_percent_sell_description
-                                          }
-                                        </Popover.Content>
-                                      </Popover>
-                                    }>
-                                    <Button
-                                      variant='link'
-                                      className='p-0 m-0 ml-1 text-info'>
-                                      <i className='fa fa-question-circle'></i>
-                                    </Button>
-                                  </OverlayTrigger>
-                                </Form.Label>
-                                <Form.Label
-                                  htmlFor='field-min-sell-trigger-percentage'
-                                  srOnly>
-                                  {common_strings._quantity}
-                                </Form.Label>
-                                <InputGroup size='sm'>
-                                  <FormControl
-                                    size='sm'
-                                    type='number'
-                                    placeholder={
-                                      setting_icon.placeholder_trigger_percent
-                                    }
-                                    required
-                                    min='0'
-                                    step='0.0001'
-                                    data-state-key='sell.triggerPercentage'
-                                    value={configuration.sell.triggerPercentage}
-                                    onChange={this.handleInputChange}
-                                  />
-                                  <InputGroup.Append>
-                                    <InputGroup.Text>
-                                      {(
-                                        configuration.sell.triggerPercentage *
-                                          100 -
-                                        100
-                                      ).toFixed(2)}
-                                      %
-                                    </InputGroup.Text>
-                                  </InputGroup.Append>
-                                </InputGroup>
-                              </Form.Group>
+                              <hr />
                             </div>
-
                             <div className='col-12'>
-                              <p className='form-header mb-1'>
-                                {common_strings._sell} -{' '}
-                                {common_strings.stop_loss}
-                              </p>
-                              <Form.Group
-                                controlId='field-sell-stop-loss-enabled'
-                                className='mb-2'>
-                                <Form.Check size='sm'>
-                                  <Form.Check.Input
-                                    type='checkbox'
-                                    data-state-key='sell.stopLoss.enabled'
-                                    checked={
-                                      configuration.sell.stopLoss.enabled
-                                    }
-                                    onChange={this.handleInputChange}
-                                  />
-                                  <Form.Check.Label>
-                                    {common_strings.stop_loss_enabled}{' '}
-                                    <OverlayTrigger
-                                      trigger='click'
-                                      key='sell-stop-loss-enabled-overlay'
-                                      placement='bottom'
-                                      overlay={
-                                        <Popover id='sell-stop-loss-enabled-overlay-right'>
-                                          <Popover.Content>
-                                            {
-                                              setting_icon.stop_loss_enabled_description
-                                            }
-                                          </Popover.Content>
-                                        </Popover>
-                                      }>
-                                      <Button
-                                        variant='link'
-                                        className='p-0 m-0 ml-1 text-info'>
-                                        <i className='fa fa-question-circle'></i>
-                                      </Button>
-                                    </OverlayTrigger>
-                                  </Form.Check.Label>
-                                </Form.Check>
-                              </Form.Group>
-                            </div>
-                            <div className='col-6'>
-                              <Form.Group
-                                controlId='field-sell-stop-loss-max-loss-percentage'
-                                className='mb-2'>
-                                <Form.Label className='mb-0'>
-                                  {common_strings.max_loss_percent}{' '}
-                                  <OverlayTrigger
-                                    trigger='click'
-                                    key='sell-stop-loss-max-loss-percentage-overlay'
-                                    placement='bottom'
-                                    overlay={
-                                      <Popover id='sell-stop-loss-max-loss-percentage-overlay-right'>
-                                        <Popover.Content>
-                                          {
-                                            setting_icon.max_loss_percent_description
-                                          }
-                                        </Popover.Content>
-                                      </Popover>
-                                    }>
-                                    <Button
-                                      variant='link'
-                                      className='p-0 m-0 ml-1 text-info'>
-                                      <i className='fa fa-question-circle'></i>
-                                    </Button>
-                                  </OverlayTrigger>
-                                </Form.Label>
-                                <InputGroup size='sm'>
-                                  <FormControl
-                                    size='sm'
-                                    type='number'
-                                    placeholder={
-                                      setting_icon.placeholder_enter_max_loss
-                                    }
-                                    required
-                                    max='1'
-                                    min='0'
-                                    step='0.0001'
-                                    data-state-key='sell.stopLoss.maxLossPercentage'
-                                    value={
-                                      configuration.sell.stopLoss
-                                        .maxLossPercentage
-                                    }
-                                    onChange={this.handleInputChange}
-                                  />
-                                  <InputGroup.Append>
-                                    <InputGroup.Text>
-                                      {(
+                              <div className='row'>
+                                <div className='col-12'>
+                                  <Form.Group
+                                    controlId='field-sell-stop-loss-enabled'
+                                    className='mb-2'>
+                                    <Form.Check size='sm'>
+                                      <Form.Check.Input
+                                        type='checkbox'
+                                        data-state-key='sell.stopLoss.enabled'
+                                        checked={
+                                          configuration.sell.stopLoss.enabled
+                                        }
+                                        onChange={this.handleInputChange}
+                                      />
+                                      <Form.Check.Label>
+                                        Stop-Loss Enabled{' '}
+                                        <OverlayTrigger
+                                          trigger='click'
+                                          key='sell-stop-loss-enabled-overlay'
+                                          placement='bottom'
+                                          overlay={
+                                            <Popover id='sell-stop-loss-enabled-overlay-right'>
+                                              <Popover.Content>
+                                                If enabled, the bot will sell
+                                                the coin when it reaches the
+                                                configured amount of the loss
+                                                from the last buy price. You can
+                                                enable this feature to prevent
+                                                the loss more than expected.
+                                              </Popover.Content>
+                                            </Popover>
+                                          }>
+                                          <Button
+                                            variant='link'
+                                            className='p-0 m-0 ml-1 text-info'>
+                                            <i className='fas fa-question-circle fa-sm'></i>
+                                          </Button>
+                                        </OverlayTrigger>
+                                      </Form.Check.Label>
+                                    </Form.Check>
+                                  </Form.Group>
+                                </div>
+                                <div className='col-xs-12 col-sm-6'>
+                                  <Form.Group
+                                    controlId='field-sell-stop-loss-max-loss-percentage'
+                                    className='mb-2'>
+                                    <Form.Label className='mb-0'>
+                                      Max loss percentage{' '}
+                                      <OverlayTrigger
+                                        trigger='click'
+                                        key='sell-stop-loss-max-loss-percentage-overlay'
+                                        placement='bottom'
+                                        overlay={
+                                          <Popover id='sell-stop-loss-max-loss-percentage-overlay-right'>
+                                            <Popover.Content>
+                                              Set maximum loss percentage for
+                                              stop-loss. i.e. if set{' '}
+                                              <code>0.80</code>, it means you
+                                              won't lose than <code>-20%</code>{' '}
+                                              of the last buy price. When you
+                                              purchased the coin at{' '}
+                                              <code>$100</code>, the last price
+                                              will be set as <code>$100</code>.
+                                              And then when the current price
+                                              reaches <code>$80</code>, the bot
+                                              will place the{' '}
+                                              <strong>market order</strong> to
+                                              sell all available balance.
+                                            </Popover.Content>
+                                          </Popover>
+                                        }>
+                                        <Button
+                                          variant='link'
+                                          className='p-0 m-0 ml-1 text-info'>
+                                          <i className='fas fa-question-circle fa-sm'></i>
+                                        </Button>
+                                      </OverlayTrigger>
+                                    </Form.Label>
+                                    <Form.Control
+                                      size='sm'
+                                      type='number'
+                                      placeholder='Enter maximum loss percentage'
+                                      required
+                                      max='1'
+                                      min='0'
+                                      step='0.0001'
+                                      data-state-key='sell.stopLoss.maxLossPercentage'
+                                      value={
                                         configuration.sell.stopLoss
-                                          .maxLossPercentage *
-                                          100 -
-                                        100
-                                      ).toFixed(2)}
-                                      %
-                                    </InputGroup.Text>
-                                  </InputGroup.Append>
-                                </InputGroup>
-                              </Form.Group>
-                            </div>
-                            <div className='col-6'>
-                              <Form.Group
-                                controlId='field-sell-stop-loss-disable-buy-minutes'
-                                className='mb-2'>
-                                <Form.Label className='mb-0'>
-                                  {setting_icon.temporary_disable_buy}{' '}
-                                  <OverlayTrigger
-                                    trigger='click'
-                                    key='sell-stop-loss-disable-buy-minutes-overlay'
-                                    placement='bottom'
-                                    overlay={
-                                      <Popover id='sell-stop-loss-disable-buy-minutes-overlay-right'>
-                                        <Popover.Content>
-                                          {
-                                            setting_icon.temporary_disable_buy_description
-                                          }
-                                        </Popover.Content>
-                                      </Popover>
-                                    }>
-                                    <Button
-                                      variant='link'
-                                      className='p-0 m-0 ml-1 text-info'>
-                                      <i className='fa fa-question-circle'></i>
-                                    </Button>
-                                  </OverlayTrigger>
-                                </Form.Label>
-                                <InputGroup size='sm'>
-                                  <FormControl
-                                    size='sm'
-                                    type='number'
-                                    placeholder={
-                                      setting_icon.placeholder_temporary_disable
-                                    }
-                                    required
-                                    max='99999999'
-                                    min='1'
-                                    step='1'
-                                    data-state-key='sell.stopLoss.disableBuyMinutes'
-                                    value={
-                                      configuration.sell.stopLoss
-                                        .disableBuyMinutes
-                                    }
-                                    onChange={this.handleInputChange}
-                                  />
-                                  <InputGroup.Append>
-                                    <InputGroup.Text>
-                                      {(
+                                          .maxLossPercentage
+                                      }
+                                      onChange={this.handleInputChange}
+                                    />
+                                  </Form.Group>
+                                </div>
+                                <div className='col-xs-12 col-sm-6'>
+                                  <Form.Group
+                                    controlId='field-sell-stop-loss-disable-buy-minutes'
+                                    className='mb-2'>
+                                    <Form.Label className='mb-0'>
+                                      Temporary disable for buying{' '}
+                                      <OverlayTrigger
+                                        trigger='click'
+                                        key='sell-stop-loss-disable-buy-minutes-overlay'
+                                        placement='bottom'
+                                        overlay={
+                                          <Popover id='sell-stop-loss-disable-buy-minutes-overlay-right'>
+                                            <Popover.Content>
+                                              Set for how long to disable buying
+                                              in minutes after placing a
+                                              stop-loss order. i.e. if set{' '}
+                                              <code>360</code>, the bot will
+                                              temporarily disable buying for 6
+                                              hours.
+                                            </Popover.Content>
+                                          </Popover>
+                                        }>
+                                        <Button
+                                          variant='link'
+                                          className='p-0 m-0 ml-1 text-info'>
+                                          <i className='fas fa-question-circle fa-sm'></i>
+                                        </Button>
+                                      </OverlayTrigger>
+                                    </Form.Label>
+                                    <Form.Control
+                                      size='sm'
+                                      type='number'
+                                      placeholder='Enter minutes for disabling buy'
+                                      required
+                                      max='99999999'
+                                      min='1'
+                                      step='1'
+                                      data-state-key='sell.stopLoss.disableBuyMinutes'
+                                      value={
                                         configuration.sell.stopLoss
-                                          .disableBuyMinutes / 60
-                                      ).toFixed(2)}{' '}
-                                      hours disabled.
-                                    </InputGroup.Text>
-                                  </InputGroup.Append>
-                                </InputGroup>
-                              </Form.Group>
+                                          .disableBuyMinutes
+                                      }
+                                      onChange={this.handleInputChange}
+                                    />
+                                  </Form.Group>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </Card.Body>
@@ -1086,121 +750,7 @@ class SettingIcon extends React.Component {
                           variant='link'
                           eventKey='0'
                           className='p-0 fs-7 text-uppercase'>
-                          {setting_icon.grid_buy_strategy_activate}
-                        </Accordion.Toggle>
-                      </Card.Header>
-                      <Accordion.Collapse eventKey='0'>
-                        <Card.Body className='px-2 py-1'>
-                          <div className='row'>
-                            <div className='col-12'>
-                              <Form.Group
-                                controlId='field-trade-options-many-buys'
-                                className='mb-2'>
-                                <Form.Check size='sm'>
-                                  <Form.Check.Input
-                                    type='checkbox'
-                                    data-state-key='strategyOptions.tradeOptions.manyBuys'
-                                    checked={
-                                      configuration.strategyOptions.tradeOptions
-                                        .manyBuys
-                                    }
-                                    onChange={this.handleInputChange}
-                                  />
-                                  <Form.Check.Label>
-                                    {setting_icon.grid_buy_strategy_activate}{' '}
-                                    <OverlayTrigger
-                                      trigger='click'
-                                      key='trade-options-many-buys-overlay'
-                                      placement='bottom'
-                                      overlay={
-                                        <Popover id='trade-options-many-buys-overlay-right'>
-                                          <Popover.Content>
-                                            {
-                                              setting_icon.grid_buy_strategy_activate_description
-                                            }
-                                          </Popover.Content>
-                                        </Popover>
-                                      }>
-                                      <Button
-                                        variant='link'
-                                        className='p-0 m-0 ml-1 text-info'>
-                                        <i className='fa fa-question-circle'></i>
-                                      </Button>
-                                    </OverlayTrigger>
-                                  </Form.Check.Label>
-                                </Form.Check>
-                              </Form.Group>
-                            </div>
-                          </div>
-                          <div className='row'>
-                            <div className='col-12'>
-                              <Form.Group
-                                controlId='field-buy-after-difference-amount'
-                                className='mb-2'>
-                                <Form.Label className='mb-0'>
-                                  {setting_icon.grid_buy_strategy}{' '}
-                                  <OverlayTrigger
-                                    trigger='click'
-                                    key='buy-after-difference-amount-overlay'
-                                    placement='bottom'
-                                    overlay={
-                                      <Popover id='buy-after-difference-amount-overlay-right'>
-                                        <Popover.Content>
-                                          {
-                                            setting_icon.grid_buy_strategy_description
-                                          }
-                                        </Popover.Content>
-                                      </Popover>
-                                    }>
-                                    <Button
-                                      variant='link'
-                                      className='p-0 m-0 ml-1 text-info'>
-                                      <i className='fa fa-question-circle'></i>
-                                    </Button>
-                                  </OverlayTrigger>
-                                </Form.Label>
-                                <InputGroup size='sm'>
-                                  <FormControl
-                                    size='sm'
-                                    type='number'
-                                    placeholder='5'
-                                    required
-                                    min='0'
-                                    step='0.0001'
-                                    data-state-key='strategyOptions.tradeOptions.differenceToBuy'
-                                    value={
-                                      configuration.strategyOptions.tradeOptions
-                                        .differenceToBuy
-                                    }
-                                    onChange={this.handleInputChange}
-                                  />
-                                  <InputGroup.Append>
-                                    <InputGroup.Text>
-                                      {
-                                        configuration.strategyOptions
-                                          .tradeOptions.differenceToBuy
-                                      }
-                                      %
-                                    </InputGroup.Text>
-                                  </InputGroup.Append>
-                                </InputGroup>
-                              </Form.Group>
-                            </div>
-                          </div>
-                        </Card.Body>
-                      </Accordion.Collapse>
-                    </Card>
-                  </Accordion>
-
-                  <Accordion className='accordion-wrapper accordion-floating'>
-                    <Card className='mt-1'>
-                      <Card.Header className='px-2 py-1'>
-                        <Accordion.Toggle
-                          as={Button}
-                          variant='link'
-                          eventKey='0'
-                          className='p-0 fs-7 text-uppercase'>
-                          {setting_icon.bot_options.bot_options}
+                          {jsonStrings[0].bot_options.bot_options}
                         </Accordion.Toggle>
                       </Card.Header>
                       <Accordion.Collapse eventKey='0'>
@@ -1208,14 +758,14 @@ class SettingIcon extends React.Component {
                           <div className='row'>
                             <div className='col-12'>
                               <p className='form-header mb-1'>
-                                {setting_icon.bot_options._language}
+                                {jsonStrings[0].bot_options._language}
                               </p>
 
                               <Form.Group
                                 controlId='field-languages'
                                 className='mb-2'>
                                 <Form.Label className='mb-0'>
-                                  {setting_icon.bot_options.select_language}
+                                  {jsonStrings[0].bot_options.select_language}
                                 </Form.Label>
                                 <Form.Control
                                   size='sm'
@@ -1249,7 +799,7 @@ class SettingIcon extends React.Component {
                                     onChange={this.handleInputChange}
                                   />
                                   <Form.Check.Label>
-                                    {setting_icon.bot_options.use_slack}?{' '}
+                                    {jsonStrings[0].bot_options.use_slack}?{' '}
                                   </Form.Check.Label>
                                 </Form.Check>
                               </Form.Group>
@@ -1268,7 +818,7 @@ class SettingIcon extends React.Component {
                                     onChange={this.handleInputChange}
                                   />
                                   <Form.Check.Label>
-                                    {setting_icon.bot_options.use_telegram}?{' '}
+                                    {jsonStrings[0].bot_options.use_telegram}?{' '}
                                   </Form.Check.Label>
                                 </Form.Check>
                               </Form.Group>
@@ -1277,14 +827,14 @@ class SettingIcon extends React.Component {
                           <div className='row'>
                             <div className='col-12'>
                               <p className='form-header mb-1'>
-                                {setting_icon.bot_options._security}
+                                {jsonStrings[0].bot_options._security}
                               </p>
 
                               <Form.Group
                                 controlId='field-login-expire'
                                 className='mb-2'>
                                 <Form.Label className='mb-0'>
-                                  {setting_icon.bot_options.login_expire_time}{' '}
+                                  {jsonStrings[0].bot_options.login_expire_time}{' '}
                                   <OverlayTrigger
                                     trigger='click'
                                     key='login-expire-overlay'
@@ -1293,7 +843,7 @@ class SettingIcon extends React.Component {
                                       <Popover id='login-expire-overlay-right'>
                                         <Popover.Content>
                                           {
-                                            setting_icon.bot_options
+                                            jsonStrings[0].bot_options
                                               .login_expire_time_description
                                           }
                                         </Popover.Content>
@@ -1302,7 +852,7 @@ class SettingIcon extends React.Component {
                                     <Button
                                       variant='link'
                                       className='p-0 m-0 ml-1 text-info'>
-                                      <i className='fa fa-question-circle'></i>
+                                      <i className='fas fa-question-circle fa-sm'></i>
                                     </Button>
                                   </OverlayTrigger>
                                 </Form.Label>
@@ -1323,35 +873,15 @@ class SettingIcon extends React.Component {
                                   />
                                   <InputGroup.Append>
                                     <InputGroup.Text>
-                                      {setting_icon.bot_options.expire_after}{' '}
+                                      {jsonStrings[0].bot_options.expire_after}{' '}
                                       {
                                         configuration.botOptions.login
                                           .loginWindowMinutes
                                       }{' '}
-                                      {setting_icon.bot_options._minutes}.
+                                      {jsonStrings[0].bot_options._minutes}.
                                     </InputGroup.Text>
                                   </InputGroup.Append>
                                 </InputGroup>
-                              </Form.Group>
-                            </div>
-                          </div>
-                          <div className='row'>
-                            <div className='col-12'>
-                              <p className='form-header mb-1'>Fees</p>
-                              <Form.Group
-                                controlId='field-bot-options-calc-fees'
-                                className='mb-2'>
-                                <Form.Check size='sm'>
-                                  <Form.Check.Input
-                                    type='checkbox'
-                                    data-state-key='botOptions.calcFees'
-                                    checked={configuration.botOptions.calcFees}
-                                    onChange={this.handleInputChange}
-                                  />
-                                  <Form.Check.Label>
-                                    Calculate fees at profit?{' '}
-                                  </Form.Check.Label>
-                                </Form.Check>
                               </Form.Group>
                             </div>
                           </div>
@@ -1368,7 +898,7 @@ class SettingIcon extends React.Component {
                           variant='link'
                           eventKey='0'
                           className='p-0 fs-7 text-uppercase'>
-                          {setting_icon.stake_coins} ?
+                          {jsonStrings[0].stake_coins} ?
                         </Accordion.Toggle>
                       </Card.Header>
                       <Accordion.Collapse eventKey='0'>
@@ -1388,7 +918,7 @@ class SettingIcon extends React.Component {
                                     onChange={this.handleInputChange}
                                   />
                                   <Form.Check.Label>
-                                    {setting_icon.stake_coins}{' '}
+                                    {jsonStrings[0].stake_coins}{' '}
                                     <OverlayTrigger
                                       trigger='click'
                                       key='sell-stake-coins-enabled-overlay'
@@ -1397,7 +927,8 @@ class SettingIcon extends React.Component {
                                         <Popover id='sell-stake-coins-enabled-overlay-right'>
                                           <Popover.Content>
                                             {
-                                              setting_icon.stake_coins_description
+                                              jsonStrings[0]
+                                                .stake_coins_description
                                             }
                                           </Popover.Content>
                                         </Popover>
@@ -1405,7 +936,7 @@ class SettingIcon extends React.Component {
                                       <Button
                                         variant='link'
                                         className='p-0 m-0 ml-1 text-info'>
-                                        <i className='fa fa-question-circle'></i>
+                                        <i className='fas fa-question-circle fa-sm'></i>
                                       </Button>
                                     </OverlayTrigger>
                                   </Form.Check.Label>
@@ -1449,7 +980,7 @@ class SettingIcon extends React.Component {
                                     onChange={this.handleInputChange}
                                   />
                                   <Form.Check.Label>
-                                    {setting_icon.use_husky_buy}{' '}
+                                    {jsonStrings[0].use_husky_buy}{' '}
                                     <OverlayTrigger
                                       trigger='click'
                                       key='husky-options-buy-signal-overlay'
@@ -1458,7 +989,8 @@ class SettingIcon extends React.Component {
                                         <Popover id='husky-options-buy-signal-overlay-right'>
                                           <Popover.Content>
                                             {
-                                              setting_icon.use_husky_buy_description
+                                              jsonStrings[0]
+                                                .use_husky_buy_description
                                             }
                                           </Popover.Content>
                                         </Popover>
@@ -1466,7 +998,7 @@ class SettingIcon extends React.Component {
                                       <Button
                                         variant='link'
                                         className='p-0 m-0 ml-1 text-info'>
-                                        <i className='fa fa-question-circle'></i>
+                                        <i className='fas fa-question-circle fa-sm'></i>
                                       </Button>
                                     </OverlayTrigger>
                                   </Form.Check.Label>
@@ -1488,7 +1020,7 @@ class SettingIcon extends React.Component {
                                     onChange={this.handleInputChange}
                                   />
                                   <Form.Check.Label>
-                                    {setting_icon.use_husky_sell}{' '}
+                                    {jsonStrings[0].use_husky_sell}{' '}
                                     <OverlayTrigger
                                       trigger='click'
                                       key='husky-options-sell-signal-overlay'
@@ -1497,7 +1029,8 @@ class SettingIcon extends React.Component {
                                         <Popover id='husky-options-sell-signal-overlay-right'>
                                           <Popover.Content>
                                             {
-                                              setting_icon.use_husky_sell_description
+                                              jsonStrings[0]
+                                                .use_husky_sell_description
                                             }
                                           </Popover.Content>
                                         </Popover>
@@ -1505,7 +1038,7 @@ class SettingIcon extends React.Component {
                                       <Button
                                         variant='link'
                                         className='p-0 m-0 ml-1 text-info'>
-                                        <i className='fa fa-question-circle'></i>
+                                        <i className='fas fa-question-circle fa-sm'></i>
                                       </Button>
                                     </OverlayTrigger>
                                   </Form.Check.Label>
@@ -1519,7 +1052,7 @@ class SettingIcon extends React.Component {
                                 controlId='field-husky-positive'
                                 className='mb-2'>
                                 <Form.Label className='mb-0'>
-                                  {setting_icon.weight_green_candle}{' '}
+                                  {jsonStrings[0].weight_green_candle}{' '}
                                   <OverlayTrigger
                                     trigger='click'
                                     key='husky-positive-overlay'
@@ -1528,7 +1061,8 @@ class SettingIcon extends React.Component {
                                       <Popover id='husky-positive-overlay-right'>
                                         <Popover.Content>
                                           {
-                                            setting_icon.weight_green_candle_description
+                                            jsonStrings[0]
+                                              .weight_green_candle_description
                                           }
                                         </Popover.Content>
                                       </Popover>
@@ -1536,7 +1070,7 @@ class SettingIcon extends React.Component {
                                     <Button
                                       variant='link'
                                       className='p-0 m-0 ml-1 text-info'>
-                                      <i className='fa fa-question-circle'></i>
+                                      <i className='fas fa-question-circle fa-sm'></i>
                                     </Button>
                                   </OverlayTrigger>
                                 </Form.Label>
@@ -1573,7 +1107,7 @@ class SettingIcon extends React.Component {
                                 controlId='field-husky-negative'
                                 className='mb-2'>
                                 <Form.Label className='mb-0'>
-                                  {setting_icon.weight_red_candle}{' '}
+                                  {jsonStrings[0].weight_red_candle}{' '}
                                   <OverlayTrigger
                                     trigger='click'
                                     key='husky-negative-overlay'
@@ -1582,7 +1116,8 @@ class SettingIcon extends React.Component {
                                       <Popover id='husky-negative-overlay-right'>
                                         <Popover.Content>
                                           {
-                                            setting_icon.weight_red_candle_description
+                                            jsonStrings[0]
+                                              .weight_red_candle_description
                                           }
                                         </Popover.Content>
                                       </Popover>
@@ -1590,7 +1125,7 @@ class SettingIcon extends React.Component {
                                     <Button
                                       variant='link'
                                       className='p-0 m-0 ml-1 text-info'>
-                                      <i className='fa fa-question-circle'></i>
+                                      <i className='fas fa-question-circle fa-sm'></i>
                                     </Button>
                                   </OverlayTrigger>
                                 </Form.Label>
@@ -1627,7 +1162,7 @@ class SettingIcon extends React.Component {
                           <div className='row'>
                             <div className='col-12'>
                               <p className='form-header mb-1'>
-                                {setting_icon.force_market_order} ?
+                                {jsonStrings[0].force_market_order} ?
                               </p>
                               <Form.Group
                                 controlId='field-sell-market-enabled'
@@ -1642,7 +1177,7 @@ class SettingIcon extends React.Component {
                                     onChange={this.handleInputChange}
                                   />
                                   <Form.Check.Label>
-                                    {setting_icon.sell_market_order}{' '}
+                                    {jsonStrings[0].sell_market_order}{' '}
                                     <OverlayTrigger
                                       trigger='click'
                                       key='sell-market-enabled-overlay'
@@ -1651,7 +1186,8 @@ class SettingIcon extends React.Component {
                                         <Popover id='sell-market-enabled-overlay-right'>
                                           <Popover.Content>
                                             {
-                                              setting_icon.sell_market_order_description
+                                              jsonStrings[0]
+                                                .sell_market_order_description
                                             }
                                           </Popover.Content>
                                         </Popover>
@@ -1659,7 +1195,7 @@ class SettingIcon extends React.Component {
                                       <Button
                                         variant='link'
                                         className='p-0 m-0 ml-1 text-info'>
-                                        <i className='fa fa-question-circle'></i>
+                                        <i className='fas fa-question-circle fa-sm'></i>
                                       </Button>
                                     </OverlayTrigger>
                                   </Form.Check.Label>
@@ -1673,7 +1209,7 @@ class SettingIcon extends React.Component {
                                 controlId='field-sell-hard-percentage'
                                 className='mb-2'>
                                 <Form.Label className='mb-0'>
-                                  {setting_icon.hard_sell_trigger}{' '}
+                                  {jsonStrings[0].hard_sell_trigger}{' '}
                                   <OverlayTrigger
                                     trigger='click'
                                     key='sell-hard-price-percentage-overlay'
@@ -1682,7 +1218,8 @@ class SettingIcon extends React.Component {
                                       <Popover id='sell-hard-price-percentage-overlay-right'>
                                         <Popover.Content>
                                           {
-                                            setting_icon.hard_sell_trigger_description
+                                            jsonStrings[0]
+                                              .hard_sell_trigger_description
                                           }
                                         </Popover.Content>
                                       </Popover>
@@ -1690,7 +1227,7 @@ class SettingIcon extends React.Component {
                                     <Button
                                       variant='link'
                                       className='p-0 m-0 ml-1 text-info'>
-                                      <i className='fa fa-question-circle'></i>
+                                      <i className='fas fa-question-circle fa-sm'></i>
                                     </Button>
                                   </OverlayTrigger>
                                 </Form.Label>
@@ -1699,7 +1236,8 @@ class SettingIcon extends React.Component {
                                     size='sm'
                                     type='number'
                                     placeholder={
-                                      setting_icon.placeholder_hard_sell_trigger
+                                      jsonStrings[0]
+                                        .placeholder_hard_sell_trigger
                                     }
                                     required
                                     min='0'
@@ -1770,7 +1308,7 @@ class SettingIcon extends React.Component {
                                       <Button
                                         variant='link'
                                         className='p-0 m-0 ml-1 text-info'>
-                                        <i className='fa fa-question-circle'></i>
+                                        <i className='fas fa-question-circle fa-sm'></i>
                                       </Button>
                                     </OverlayTrigger>
                                   </Form.Check.Label>
@@ -1805,7 +1343,7 @@ class SettingIcon extends React.Component {
                                       <Button
                                         variant='link'
                                         className='p-0 m-0 ml-1 text-info'>
-                                        <i className='fa fa-question-circle'></i>
+                                        <i className='fas fa-question-circle fa-sm'></i>
                                       </Button>
                                     </OverlayTrigger>
                                   </Form.Check.Label>
@@ -1873,7 +1411,7 @@ class SettingIcon extends React.Component {
                                       <Button
                                         variant='link'
                                         className='p-0 m-0 ml-1 text-info'>
-                                        <i className='fa fa-question-circle'></i>
+                                        <i className='fas fa-question-circle fa-sm'></i>
                                       </Button>
                                     </OverlayTrigger>
                                   </Form.Check.Label>
@@ -1903,7 +1441,7 @@ class SettingIcon extends React.Component {
                                     <Button
                                       variant='link'
                                       className='p-0 m-0 ml-1 text-info'>
-                                      <i className='fa fa-question-circle'></i>
+                                      <i className='fas fa-question-circle fa-sm'></i>
                                     </Button>
                                   </OverlayTrigger>
                                 </Form.Label>
@@ -1951,7 +1489,7 @@ class SettingIcon extends React.Component {
                                     <Button
                                       variant='link'
                                       className='p-0 m-0 ml-1 text-info'>
-                                      <i className='fa fa-question-circle'></i>
+                                      <i className='fas fa-question-circle fa-sm'></i>
                                     </Button>
                                   </OverlayTrigger>
                                 </Form.Label>
@@ -1998,7 +1536,7 @@ class SettingIcon extends React.Component {
                                     <Button
                                       variant='link'
                                       className='p-0 m-0 ml-1 text-info'>
-                                      <i className='fa fa-question-circle'></i>
+                                      <i className='fas fa-question-circle fa-sm'></i>
                                     </Button>
                                   </OverlayTrigger>
                                 </Form.Label>
@@ -2027,24 +1565,25 @@ class SettingIcon extends React.Component {
               </div>
             </Modal.Body>
             <Modal.Footer>
-              <div className='w-100'>{setting_icon.note_changes}</div>
+              <div className='w-100'>{jsonStrings[0].note_changes}</div>
               <Button
                 variant='danger'
                 size='sm'
                 onClick={() => this.handleModalShow('reset')}>
-                {setting_icon.reset_factory.reset_factory}
+                {jsonStrings[0].reset_factory.reset_factory}
               </Button>
               <Button
                 variant='secondary'
                 size='sm'
                 onClick={() => this.handleModalClose('setting')}>
-                {common_strings._close}
+                {jsonStrings[1]._close}
               </Button>
               <Button
                 variant='primary'
                 size='sm'
+                disabled={!isValid}
                 onClick={() => this.handleModalShow('confirm')}>
-                {common_strings.save_changes}
+                {jsonStrings[1].save_changes}
               </Button>
             </Modal.Footer>
           </Form>
@@ -2057,21 +1596,21 @@ class SettingIcon extends React.Component {
           <Modal.Header className='pt-1 pb-1'>
             <Modal.Title>
               <span className='text-danger'>
-                ⚠ {setting_icon.reset_factory.delete_all}
+                ⚠ {jsonStrings[0].reset_factory.delete_all}
               </span>
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            {setting_icon.reset_factory.delete_all_description[1]}
+            {jsonStrings[0].reset_factory.delete_all_description[1]}
             <br />
             <br />
-            {setting_icon.reset_factory.delete_all_description[2]}
+            {jsonStrings[0].reset_factory.delete_all_description[2]}
             <br />
             <br />
-            {setting_icon.reset_factory.delete_all_description[3]}
+            {jsonStrings[0].reset_factory.delete_all_description[3]}
             <br />
             <br />
-            {setting_icon.reset_factory.delete_all_description[4]}
+            {jsonStrings[0].reset_factory.delete_all_description[4]}
           </Modal.Body>
 
           <Modal.Footer>
@@ -2079,7 +1618,7 @@ class SettingIcon extends React.Component {
               variant='secondary'
               size='sm'
               onClick={() => this.handleModalClose('reset')}>
-              {setting_icon._cancel}
+              {jsonStrings[0]._cancel}
             </Button>
             <Button
               variant='primary'
@@ -2099,7 +1638,7 @@ class SettingIcon extends React.Component {
                   action: 'reset-factory-settings-minus-symbols'
                 })
               }>
-              {setting_icon.reset_factory.delete_all_keep_symbols}
+              {jsonStrings[0].reset_factory.delete_all_keep_symbols}
             </Button>
           </Modal.Footer>
         </Modal>
@@ -2111,21 +1650,21 @@ class SettingIcon extends React.Component {
           <Modal.Header className='pt-1 pb-1'>
             <Modal.Title>
               <span className='text-danger'>
-                ⚠ {common_strings.save_changes}
+                ⚠ {jsonStrings[1].save_changes}
               </span>
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            {setting_icon.warning_global_save}
+            {jsonStrings[0].warning_global_save}
             <br />
             <br />
-            {setting_icon.ask_all_or_global}
+            {jsonStrings[0].ask_all_or_global}
             <br />
             <br />
-            {setting_icon.choosed_all_symbols}
+            {jsonStrings[0].choosed_all_symbols}
             <br />
             <br />
-            {setting_icon.choosed_global}
+            {jsonStrings[0].choosed_global}
           </Modal.Body>
 
           <Modal.Footer>
@@ -2133,13 +1672,13 @@ class SettingIcon extends React.Component {
               variant='secondary'
               size='sm'
               onClick={() => this.handleModalClose('confirm')}>
-              {setting_icon._cancel}
+              {jsonStrings[0]._cancel}
             </Button>
             <Button
               variant='success'
               size='sm'
               onClick={() => this.handleFormSubmit({ action: 'apply-to-all' })}>
-              {setting_icon.apply_all_symbols}
+              {jsonStrings[0].apply_all_symbols}
             </Button>
             <Button
               variant='primary'
@@ -2149,7 +1688,7 @@ class SettingIcon extends React.Component {
                   action: 'apply-to-global-only'
                 })
               }>
-              {setting_icon.apply_global_only}
+              {jsonStrings[0].apply_global_only}
             </Button>
           </Modal.Footer>
         </Modal>

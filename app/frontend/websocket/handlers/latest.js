@@ -23,6 +23,8 @@ const getSymbolFromKey = key => {
   };
 };
 
+let languageReady = '';
+let languageData = {};
 const handleLatest = async (logger, ws, _payload) => {
   const cacheTrailingTradeCommon = await cache.hgetall('trailing-trade-common');
   const cacheTrailingTradeSymbols = await cache.hgetall(
@@ -36,7 +38,15 @@ const handleLatest = async (logger, ws, _payload) => {
   const globalConfiguration = await getGlobalConfiguration(logger);
   logger.info({ globalConfiguration }, 'Configuration from MongoDB');
 
-  let savedPassword = config.get('password');
+  if (
+    _.isEmpty(languageData) &&
+    languageReady !== globalConfiguration.botOptions.language
+  ) {
+    languageData = require(`../../../../public/${globalConfiguration.botOptions.language}.json`);
+    languageReady = globalConfiguration.botOptions.language;
+  }
+
+  let savedPassword = config.get('password') || undefined;
 
   if (savedPassword === undefined || savedPassword === null) {
     savedPassword = '';
@@ -50,6 +60,11 @@ const handleLatest = async (logger, ws, _payload) => {
 
   if (savedPassword === '') {
     login.passwordActivated = false;
+    await cache.set(
+      `tempLogin`,
+      JSON.stringify({ logged: true, elapsedTime: new Date() }),
+      login.loginWindowMinutes * 60
+    );
   } else {
     login.passwordActivated = true;
   }
@@ -71,7 +86,8 @@ const handleLatest = async (logger, ws, _payload) => {
       apiInfo: binance.client.getInfo(),
       passwordActivated: login.passwordActivated,
       login: cachedTempLogin,
-      pastTrades: cachedTrades
+      pastTrades: cachedTrades,
+      language: languageData
     };
   } catch (e) {
     logger.error({ e }, 'Something wrong with trailing-trade-common cache');

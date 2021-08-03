@@ -40,7 +40,6 @@ class SymbolEnableActionIcon extends React.Component {
   render() {
     const { symbol, className, jsonStrings } = this.props;
 
-    const { symbol_enable_action, common_strings } = jsonStrings;
     return (
       <span
         className={
@@ -50,33 +49,35 @@ class SymbolEnableActionIcon extends React.Component {
           type='button'
           className='btn btn-sm btn-link p-0 pl-1'
           onClick={this.handleModalShow}>
-          <i className='fa fa-play-circle'></i>
+          <i className='fas fa-play-circle'></i>
         </button>
 
         <Modal show={this.state.showModal} onHide={this.handleModalClose}>
           <Modal.Header className='pt-1 pb-1'>
-            <Modal.Title>{symbol_enable_action.resume_symbol_action} - {symbol}</Modal.Title>
+            <Modal.Title>
+              {jsonStrings[6].resume_symbol_action} - {symbol}
+            </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            {symbol_enable_action._description[1]}
+            {jsonStrings[6]._description[1]}
             <br />
-            {symbol_enable_action._description[2]}
+            {jsonStrings[6]._description[2]}
             <br />
-            {symbol_enable_action._description[3]}
+            {jsonStrings[6]._description[3]}
           </Modal.Body>
           <Modal.Footer>
             <Button
               variant='secondary'
               size='sm'
               onClick={this.handleModalClose}>
-              {common_strings._close}
+              {jsonStrings[1]._close}
             </Button>
             <Button
               type='button'
               variant='danger'
               size='sm'
               onClick={this.handleDelete}>
-              {common_strings._resume}
+              {jsonStrings[1]._resume}
             </Button>
           </Modal.Footer>
         </Modal>

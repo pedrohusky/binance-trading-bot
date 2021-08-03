@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const { cache, binance, mongo, messenger } = require('../../helpers');
+const { cache, binance, mongo, PubSub } = require('../../helpers');
 
 const isValidCachedExchangeSymbols = exchangeSymbols =>
   _.get(
@@ -71,6 +71,123 @@ const cacheExchangeSymbols = async (logger, _globalConfiguration) => {
   );
 
   logger.info({ exchangeSymbols }, 'Saved exchange symbols to cache');
+};
+
+/**
+ * Get last buy price from mongodb
+ *
+ * @param {*} logger
+ * @param {*} symbol
+ */
+const getLastBuyPrice = async (logger, symbol) =>
+  mongo.findOne(logger, 'trailing-trade-symbols', {
+    key: `${symbol}-last-buy-price`
+  });
+
+/**
+ * Save last buy price to mongodb
+ *
+ * @param {*} logger
+ * @param {*} symbol
+ * @param {*} param2
+ */
+const saveLastBuyPrice = async (
+  logger,
+  symbol,
+  { lastBuyPrice, quantity, lastBoughtPrice = 0 }
+) => {
+  logger.info(
+    { tag: 'save-last-buy-price', symbol, lastBuyPrice, quantity },
+    'Save last buy price'
+  );
+  return mongo.upsertOne(
+    logger,
+    'trailing-trade-symbols',
+    { key: `${symbol}-last-buy-price` },
+    {
+      key: `${symbol}-last-buy-price`,
+      lastBuyPrice,
+      quantity,
+      lastBoughtPrice
+    }
+  );
+};
+
+/**
+ * Remove override data for Indicator
+ *
+ * @param {*} _logger
+ * @param {*} key
+ * @returns
+ */
+const removeOverrideDataForIndicator = async (_logger, key) =>
+  cache.hdel('trailing-trade-indicator-override', key);
+
+/**
+ * Retrieve last buy price and recalculate new last buy price
+ *
+ * @param {*} logger
+ * @param {*} symbol
+ * @param {*} order
+ */
+const calculateLastBuyPrice = async (logger, symbol, order) => {
+  const { type, executedQty, cummulativeQuoteQty } = order;
+  const lastBuyPriceDoc = await getLastBuyPrice(logger, symbol);
+
+  const orgLastBuyPrice = _.get(lastBuyPriceDoc, 'lastBuyPrice', 0);
+  const orgQuantity = _.get(lastBuyPriceDoc, 'quantity', 0);
+  const orgTotalAmount = orgLastBuyPrice * orgQuantity;
+
+  logger.info(
+    { orgLastBuyPrice, orgQuantity, orgTotalAmount },
+    'Existing last buy price'
+  );
+
+  const filledQuoteQty = parseFloat(cummulativeQuoteQty);
+  const filledQuantity = parseFloat(executedQty);
+
+  const newQuantity = orgQuantity + filledQuantity;
+  const newTotalAmount = orgTotalAmount + filledQuoteQty;
+
+  const newLastBuyPrice = newTotalAmount / newQuantity;
+
+  logger.info(
+    { newLastBuyPrice, newTotalAmount, newQuantity },
+    'New last buy price'
+  );
+  await saveLastBuyPrice(logger, symbol, {
+    lastBuyPrice: newLastBuyPrice,
+    quantity: newQuantity
+  });
+
+  PubSub.publish('frontend-notification', {
+    type: 'success',
+    title: `New last buy price for ${symbol} has been updated.`
+  });
+};
+
+/**
+ * Save order to mongodb
+ *
+ * @param {*} logger
+ * @param {*} data
+ */
+const saveOrder = async (logger, data) => {
+  logger.info({ tag: 'save-order', data }, 'Save order');
+
+  // Order ID must be included.
+  const {
+    order: { orderId }
+  } = data;
+  return mongo.upsertOne(
+    logger,
+    'trailing-trade-orders',
+    { key: orderId },
+    {
+      key: orderId,
+      ...data
+    }
+  );
 };
 
 /**
@@ -291,46 +408,6 @@ const getAndCacheOpenOrdersForSymbol = async (logger, symbol) => {
 };
 
 /**
- * Get last buy price from mongodb
- *
- * @param {*} logger
- * @param {*} symbol
- */
-const getLastBuyPrice = async (logger, symbol) =>
-  mongo.findOne(logger, 'trailing-trade-symbols', {
-    key: `${symbol}-last-buy-price`
-  });
-
-/**
- * Save last buy price to mongodb
- *
- * @param {*} logger
- * @param {*} symbol
- * @param {*} param2
- */
-const saveLastBuyPrice = async (
-  logger,
-  symbol,
-  { lastBuyPrice, quantity, lastBoughtPrice = 0 }
-) => {
-  logger.info(
-    { tag: 'save-last-buy-price', symbol, lastBuyPrice, quantity },
-    'Save last buy price'
-  );
-  return mongo.upsertOne(
-    logger,
-    'trailing-trade-symbols',
-    { key: `${symbol}-last-buy-price` },
-    {
-      key: `${symbol}-last-buy-price`,
-      lastBuyPrice,
-      quantity,
-      lastBoughtPrice
-    }
-  );
-};
-
-/**
  * Lock symbol
  *
  * @param {*} logger
@@ -341,6 +418,7 @@ const saveLastBuyPrice = async (
  */
 const lockSymbol = async (logger, symbol, ttl = 5) => {
   logger.info({ debug: true, symbol }, `Lock ${symbol} for ${ttl} seconds`);
+  return true;
   return cache.set(`lock-${symbol}`, true, ttl);
 };
 
@@ -488,16 +566,6 @@ const getOverrideDataForIndicator = async (_logger, key) => {
   return JSON.parse(overrideData);
 };
 
-/**
- * Remove override data for Indicator
- *
- * @param {*} _logger
- * @param {*} key
- * @returns
- */
-const removeOverrideDataForIndicator = async (_logger, key) =>
-  cache.hdel('trailing-trade-indicator-override', key);
-
 module.exports = {
   cacheExchangeSymbols,
   getAccountInfoFromAPI,
@@ -519,5 +587,7 @@ module.exports = {
   getOverrideDataForSymbol,
   removeOverrideDataForSymbol,
   getOverrideDataForIndicator,
-  removeOverrideDataForIndicator
+  removeOverrideDataForIndicator,
+  calculateLastBuyPrice,
+  saveOrder
 };

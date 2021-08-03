@@ -71,6 +71,18 @@ const upsertOne = async (funcLogger, collectionName, filter, document) => {
   return result;
 };
 
+const findAll = async (funcLogger, collectionName, query) => {
+  const logger = funcLogger.child({ helper: 'mongo', funcName: 'findAll' });
+
+  const collection = database.collection(collectionName);
+
+  logger.info({ collectionName, query }, 'Finding document from MongoDB');
+  const result = await collection.find(query);
+  logger.info({ result }, 'Found documents from MongoDB');
+
+  return result.toArray();
+};
+
 const deleteAll = async (funcLogger, collectionName, filter) => {
   const logger = funcLogger.child({ helper: 'mongo', funcName: 'deleteAll' });
 
@@ -94,8 +106,10 @@ const deleteOne = async (funcLogger, collectionName, filter) => {
 };
 
 module.exports = {
+  client,
   connect,
   findOne,
+  findAll,
   insertOne,
   upsertOne,
   deleteAll,

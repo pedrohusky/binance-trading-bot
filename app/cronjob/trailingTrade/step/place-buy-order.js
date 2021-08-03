@@ -2,7 +2,6 @@ const _ = require('lodash');
 const moment = require('moment');
 const config = require('config');
 const { binance, messenger, cache } = require('../../../helpers');
-const { roundDown } = require('../../trailingTradeHelper/util');
 const {
   getAndCacheOpenOrdersForSymbol,
   getAccountInfoFromAPI,
@@ -38,15 +37,13 @@ const execute = async (logger, rawData) => {
     symbolConfiguration: {
       buy: {
         enabled: tradingEnabled,
-        maxPurchaseAmount,
         minPurchaseAmount,
-        stopPercentage,
-        limitPercentage
+        currentGridTradeIndex,
+        currentGridTrade
       },
       strategyOptions: {
         huskyOptions: { buySignal }
-      },
-      system: { checkManualBuyOrderPeriod }
+      }
     },
     action,
     quoteAssetBalance: { free: quoteAssetFreeBalance },
@@ -56,6 +53,8 @@ const execute = async (logger, rawData) => {
       trend: { signedTrendDiff }
     }
   } = data;
+
+  const humanisedGridTradeIndex = currentGridTradeIndex + 1;
 
   if (isLocked) {
     logger.info(
@@ -89,8 +88,18 @@ const execute = async (logger, rawData) => {
     return data;
   }
 
+  if (currentGridTrade === null) {
+    data.buy.processMessage = `Current grid trade is not defined. Cannot place an order.`;
+    data.buy.updatedAt = moment().utc();
+
+    return data;
+  }
+
+  const { maxPurchaseAmount, stopPercentage, limitPercentage } =
+    currentGridTrade;
   if (maxPurchaseAmount <= 0) {
-    data.buy.processMessage = _actions.action_max_purchase_undefined;
+    data.buy.processMessage =
+      'Max purchase amount must be configured. Please configure symbol settings.';
     data.buy.updatedAt = moment().utc();
 
     return data;
@@ -101,16 +110,29 @@ const execute = async (logger, rawData) => {
     'Attempting to place buy order'
   );
 
-  const lotPrecision = parseFloat(stepSize) === 1 ? 0 : stepSize.indexOf(1) - 1;
-  const pricePrecision =
+  const lotStepSizePrecision =
+    parseFloat(stepSize) === 1 ? 0 : stepSize.indexOf(1) - 1;
+  const priceTickPrecision =
     parseFloat(tickSize) === 1 ? 0 : tickSize.indexOf(1) - 1;
 
-  let freeBalance = parseFloat(_.floor(quoteAssetFreeBalance, pricePrecision));
+  const orgFreeBalance = parseFloat(
+    _.floor(quoteAssetFreeBalance, priceTickPrecision)
+  );
+  let freeBalance = orgFreeBalance;
 
   logger.info({ freeBalance }, 'Free balance');
   if (freeBalance > maxPurchaseAmount) {
     freeBalance = maxPurchaseAmount;
     logger.info({ freeBalance }, 'Free balance after adjust');
+  }
+
+  if (freeBalance < parseFloat(minNotional)) {
+    data.buy.processMessage =
+      `Do not place a buy order for the grid trade #${humanisedGridTradeIndex} ` +
+      `as not enough ${quoteAsset} to buy ${baseAsset}.`;
+    data.buy.updatedAt = moment().utc();
+
+    return data;
   }
 
   if (freeBalance < parseFloat(minPurchaseAmount)) {
@@ -121,45 +143,67 @@ const execute = async (logger, rawData) => {
     return data;
   }
 
-  if (freeBalance < parseFloat(minNotional)) {
-    data.buy.processMessage = `${
-      _actions.action_dont_place_order[1] +
-      quoteAsset +
-      _actions.action_dont_place_order[2] +
-      baseAsset
-    }.`;
-    data.buy.updatedAt = moment().utc();
-
-    return data;
-  }
-
-  const stopPrice = roundDown(currentPrice * stopPercentage, pricePrecision);
-  const limitPrice = roundDown(currentPrice * limitPercentage, pricePrecision);
+  const stopPrice = _.floor(currentPrice * stopPercentage, priceTickPrecision);
+  const limitPrice = _.floor(
+    currentPrice * limitPercentage,
+    priceTickPrecision
+  );
 
   logger.info({ stopPrice, limitPrice }, 'Stop price and limit price');
 
-  const orderQuantityBeforeCommission = 1 / (limitPrice / freeBalance);
+  const orderQuantityBeforeCommission = parseFloat(
+    _.ceil(freeBalance / limitPrice, lotStepSizePrecision)
+  );
   logger.info(
     { orderQuantityBeforeCommission },
     'Order quantity before commission'
   );
-  const orderQuantity = parseFloat(
+  let orderQuantity = parseFloat(
     _.floor(
       orderQuantityBeforeCommission -
         orderQuantityBeforeCommission * (0.1 / 100),
-      lotPrecision
+      lotStepSizePrecision
     )
   );
+
+  // If free balance is exactly same as minimum notional, then it will be failed to place the order
+  // because it will be always less than minimum notional after calculating commission.
+  // To avoid the minimum notional issue, add commission to free balance
+
+  if (
+    orgFreeBalance > parseFloat(minNotional) &&
+    maxPurchaseAmount === parseFloat(minNotional)
+  ) {
+    // Note: For some reason, Binance rejects the order with exact amount of minimum notional amount.
+    // For example,
+    //    - Calculated limit price: 289.48 (current price) * 1.026 (limit percentage) = 297
+    //    - Calcuated order quantity: 0.0337
+    //    - Calculated quote amount: 297 * 0.0337 = 10.0089, which is over minimum notional value 10.
+    // Above the order is rejected by Binance with MIN_NOTIONAL error.
+    // As a result, I had to re-calculate if max purchase amount is exactly same as minimum notional value.
+    orderQuantity = parseFloat(
+      _.ceil(
+        (freeBalance + freeBalance * (0.1 / 100)) / limitPrice,
+        lotStepSizePrecision
+      )
+    );
+  }
 
   logger.info({ orderQuantity }, 'Order quantity after commission');
 
   if (orderQuantity * limitPrice < parseFloat(minNotional)) {
-    data.buy.processMessage =
-      _actions.action_dont_place_order_calc[1] +
-      quoteAsset +
-      _actions.action_dont_place_order_calc[2] +
-      baseAsset +
-      _actions.action_dont_place_order_calc[3];
+    const processMessage =
+      `Do not place a buy order for the grid trade #${humanisedGridTradeIndex} ` +
+      `as not enough ${quoteAsset} ` +
+      `to buy ${baseAsset} after calculating commission - Order amount: ${_.floor(
+        orderQuantity * limitPrice,
+        priceTickPrecision
+      )} ${quoteAsset}, Minimum notional: ${minNotional}.`;
+    logger.info(
+      { calculatedAmount: orderQuantity * limitPrice, minNotional },
+      processMessage
+    );
+    data.buy.processMessage = processMessage;
     data.buy.updatedAt = moment().utc();
 
     return data;
@@ -167,23 +211,22 @@ const execute = async (logger, rawData) => {
 
   if (tradingEnabled !== true) {
     data.buy.processMessage =
-      _actions.action_trading_for_disabled[1] +
-      symbol +
-      _actions.action_trading_for_disabled[2];
+      `Trading for ${symbol} is disabled. ` +
+      `Do not place an order for the grid trade #${humanisedGridTradeIndex}.`;
     data.buy.updatedAt = moment().utc();
 
     return data;
   }
 
   if (isExceedAPILimit(logger)) {
-    data.buy.processMessage = _actions.action_api_exceed;
+    data.buy.processMessage = `Binance API limit has been exceeded. Do not place an order.`;
     data.buy.updatedAt = moment().utc();
 
     return data;
   }
 
   if (buySignal) {
-    if (signedTrendDiff == -1) {
+    if (signedTrendDiff === -1) {
       data.buy.processMessage = 'Trend is going down, cancelling order';
       data.buy.updatedAt = moment().utc();
 

@@ -29,10 +29,9 @@ const execute = async (logger, rawData) => {
     symbolConfiguration: {
       sell: {
         enabled: tradingEnabled,
-        stopPercentage,
-        limitPercentage,
-        triggerPercentage,
-        stakeCoinEnabled
+        currentGridTrade,
+        stakeCoinEnabled,
+        triggerPercentage
       },
       strategyOptions: {
         huskyOptions: { sellSignal }
@@ -73,6 +72,16 @@ const execute = async (logger, rawData) => {
     return data;
   }
 
+  if (currentGridTrade === null) {
+    data.sell.processMessage = `Current grid trade is not defined. Do not place an order.`;
+    data.sell.updatedAt = moment().utc();
+
+    return data;
+  }
+
+  const { stopPercentage, limitPercentage, quantityPercentage } =
+    currentGridTrade;
+
   const lotPrecision = parseFloat(stepSize) === 1 ? 0 : stepSize.indexOf(1) - 1;
   const pricePrecision =
     parseFloat(tickSize) === 1 ? 0 : tickSize.indexOf(1) - 1;
@@ -89,9 +98,33 @@ const execute = async (logger, rawData) => {
     logger.info({ freeBalance }, 'Free balance');
   }
 
+  // If after calculating quantity percentage, it is not enough minimum notional, then simply sell all balance
+
   let orderQuantity = parseFloat(
     _.floor(freeBalance - freeBalance * (0.1 / 100), lotPrecision)
   );
+
+  // When order quantity multiply quantity percentage is more than minimum notional
+  const orderQuantityWithPercentage = parseFloat(
+    _.floor(
+      freeBalance * quantityPercentage -
+        freeBalance * quantityPercentage * (0.1 / 100),
+      lotPrecision
+    )
+  );
+  logger.info(
+    { orderQuantityWithPercentage: orderQuantity },
+    'Calculated order quantity with quantity percentage.'
+  );
+
+  if (orderQuantityWithPercentage * limitPrice > parseFloat(minNotional)) {
+    // Then calculate order quantity
+    orderQuantity = orderQuantityWithPercentage;
+    logger.info(
+      { orderQuantityWithPercentage: orderQuantity },
+      'Apply order quantity with quantity percentage.'
+    );
+  }
 
   if (orderQuantity <= parseFloat(minQty)) {
     data.sell.processMessage =
@@ -132,7 +165,7 @@ const execute = async (logger, rawData) => {
 
   if (sellSignal) {
     if (signedTrendDiff === 1) {
-      data.buy.processMessage = 'Trend is going up, cancelling order';
+      data.buy.processMessage = 'Trend is going up, I will not open a order';
       data.buy.updatedAt = moment().utc();
 
       return data;

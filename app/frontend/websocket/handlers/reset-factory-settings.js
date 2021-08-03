@@ -14,7 +14,7 @@ const handleResetFactorySettings = async (logger, ws, payload) => {
 
   const config = await getGlobalConfiguration(logger);
 
-  if (action == 'reset-factory-settings-minus-symbols') {
+  if (action === 'reset-factory-settings-minus-symbols') {
     await resetToFactorySettingsWithSymbols(logger, config.symbols);
   } else {
     await resetToFactorySettings(logger, config.symbols);

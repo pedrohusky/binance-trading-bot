@@ -2,6 +2,9 @@ const _ = require('lodash');
 const moment = require('moment');
 const { mongo, cache, messenger } = require('../../../helpers');
 const { isActionDisabled } = require('../../trailingTradeHelper/common');
+const {
+  deleteSymbolGridTrade
+} = require('../../trailingTradeHelper/configuration');
 /**
  * Retrieve last buy order from cache
  *
@@ -17,6 +20,27 @@ const getLastBuyOrder = async (logger, symbol) => {
   logger.info({ cachedLastBuyOrder }, 'Retrieved last buy order from cache');
 
   return cachedLastBuyOrder;
+};
+
+/**
+ * Retrieve last grid order from cache
+ *
+ * @param {*} logger
+ * @param {*} symbol
+ * @param {*} side
+ * @returns
+ */
+const getGridTradeLastOrder = async (logger, symbol, side) => {
+  const cachedLastOrder =
+    JSON.parse(await cache.get(`${symbol}-grid-trade-last-${side}-order`)) ||
+    {};
+
+  logger.info(
+    { cachedLastOrder },
+    `Retrieved grid trade last ${side} order from cache`
+  );
+
+  return cachedLastOrder;
 };
 
 const getLastSellOrder = async (logger, symbol) => {
@@ -40,6 +64,9 @@ const removeLastBuyPrice = async (logger, symbol) => {
   await mongo.deleteOne(logger, 'trailing-trade-symbols', {
     key: `${symbol}-last-buy-price`
   });
+
+  // Delete symbol grid trade
+  await deleteSymbolGridTrade(logger, symbol);
 
   // messenger.sendMessage(
   //  symbol, null, 'REMOVE_LAST_BUY');
@@ -145,6 +172,30 @@ const execute = async (logger, rawData) => {
   if (_.isEmpty(lastSellOrder) === false) {
     logger.info(
       'Do not process to remove last buy price because there is a buy order to be confirmed.'
+    );
+    return data;
+  }
+
+  const gridTradeLastBuyOrder = await getGridTradeLastOrder(
+    logger,
+    symbol,
+    'buy'
+  );
+  if (_.isEmpty(gridTradeLastBuyOrder) === false) {
+    logger.info(
+      'Do not process to remove last buy price because there is a grid trade last buy order to be confirmed.'
+    );
+    return data;
+  }
+
+  const gridTradeLastSellOrder = await getGridTradeLastOrder(
+    logger,
+    symbol,
+    'sell'
+  );
+  if (_.isEmpty(gridTradeLastSellOrder) === false) {
+    logger.info(
+      'Do not process to remove last buy price because there is a grid trade last sell order to be confirmed.'
     );
     return data;
   }

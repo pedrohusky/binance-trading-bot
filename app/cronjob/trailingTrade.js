@@ -23,6 +23,7 @@ const {
   getIndicators,
   handleOpenOrders,
   determineAction,
+  ensureGridTradeOrderExecuted,
   place_manual_trade,
   placeBuyOrder,
   placeSellOrder,
@@ -35,6 +36,7 @@ const {
   updateTelegramBotTrailingTradeData,
   manageError
 } = require('../helpers/telegram');
+const { messenger } = require('../helpers');
 
 const execute = async logger => {
   try {
@@ -108,6 +110,10 @@ const execute = async logger => {
           {
             stepName: 'ensure-open-placed',
             stepFunc: ensureOrderPlaced
+          },
+          {
+            stepName: 'ensure-grid-trade-order-executed',
+            stepFunc: ensureGridTradeOrderExecuted
           },
           {
             stepName: 'get-balances',

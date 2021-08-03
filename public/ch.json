@@ -228,7 +228,7 @@
   },
   "symbol_delete": {
     "remove_symbol": "移除符号",
-    "_description": {
+    "symbol_delete_description": {
       "1": "您确定要从缓存中删除该符号吗？",
       "2": "请注意，这只会删除缓存的值。",
       "3": "如果符号还在被监视，它会再次出现。"

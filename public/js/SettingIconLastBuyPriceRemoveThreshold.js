@@ -16,8 +16,10 @@ class SettingIconLastBuyPriceRemoveThreshold extends React.Component {
     // Only update configuration, when the modal is closed and different.
     if (
       _.isEmpty(nextProps.lastBuyPriceRemoveThresholds) === false &&
-      _.isEqual(nextProps.lastBuyPriceRemoveThresholds, this.state.lastBuyPriceRemoveThresholds) ===
-      false
+      _.isEqual(
+        nextProps.lastBuyPriceRemoveThresholds,
+        this.state.lastBuyPriceRemoveThresholds
+      ) === false
     ) {
       const { lastBuyPriceRemoveThresholds } = nextProps;
       this.setState({
@@ -32,18 +34,29 @@ class SettingIconLastBuyPriceRemoveThreshold extends React.Component {
       target.type === 'checkbox'
         ? target.checked
         : target.type === 'number'
-          ? +target.value
-          : target.value;
+        ? +target.value
+        : target.value;
     const stateKey = target.getAttribute('data-state-key');
 
     const { lastBuyPriceRemoveThresholds } = this.state;
 
-    const newLastBuyPriceRemoveThresholds = _.set(lastBuyPriceRemoveThresholds, stateKey, value);
+    console.log(
+      '_.set(lastBuyPriceRemoveThresholds, stateKey, value) => ',
+      _.set(lastBuyPriceRemoveThresholds, stateKey, value)
+    );
+
+    const newLastBuyPriceRemoveThresholds = _.set(
+      lastBuyPriceRemoveThresholds,
+      stateKey,
+      value
+    );
     this.setState({
       lastBuyPriceRemoveThresholds: newLastBuyPriceRemoveThresholds
     });
 
-    this.props.handleLastBuyPriceRemoveThresholdChange(lastBuyPriceRemoveThresholds);
+    this.props.handleLastBuyPriceRemoveThresholdChange(
+      lastBuyPriceRemoveThresholds
+    );
   }
 
   render() {
@@ -54,58 +67,62 @@ class SettingIconLastBuyPriceRemoveThreshold extends React.Component {
       return '';
     }
 
-    const { setting_icon, common_strings } = jsonStrings;
-
     return quoteAssets.map((quoteAsset, index) => {
       return (
-        <div
-          key={'quote-asset-' + quoteAsset + '-' + index}
-          className='coin-info-last-buy-remove-threshold-wrapper'>
-          <Form.Group
-            controlId={'field-min-last-buy-remove-threshold-limit-percentage-' + quoteAsset}
-            className='mb-2'>
-            <Form.Label className='mb-0'>
-              {common_strings.last_buy_price_remove_threshold}{' '}
-              <OverlayTrigger
-                trigger='click'
-                key={'last-buy-remove-threshold-overlay-' + quoteAsset}
-                placement='bottom'
-                overlay={
-                  <Popover
-                    id={'last-buy-remove-threshold-overlay-right' + quoteAsset}>
-                    <Popover.Content>
-                      {setting_icon.last_buy_price_remove_threshold_description[1]} "
-                      {quoteAsset}".
-
-                      {setting_icon.last_buy_price_remove_threshold_description[2]}
-                    </Popover.Content>
-                  </Popover>
-                }>
-                <Button variant='link' className='p-0 m-0 ml-1 text-info'>
-                  <i className='fa fa-question-circle'></i>
-                </Button>
-              </OverlayTrigger>
-            </Form.Label>
-            <InputGroup size='sm'>
-              <FormControl
-                size='sm'
-                type='number'
-                placeholder={setting_icon.placeholder_last_buy_remove_price_threshold}
-                required
-                min='0.0001'
-                step='0.0001'
-                data-state-key={quoteAsset}
-                value={lastBuyPriceRemoveThresholds[quoteAsset]}
-                onChange={this.handleInputChange}
-              />
-              <InputGroup.Append>
-                <InputGroup.Text>
-                  {quoteAsset}
-                </InputGroup.Text>
-              </InputGroup.Append>
-            </InputGroup>
-          </Form.Group>
-        </div>
+        <Form.Group
+          controlId={
+            'field-min-last-buy-remove-threshold-limit-percentage-' +
+            quoteAsset +
+            '-' +
+            index
+          }
+          className='mb-2'>
+          <Form.Label className='mb-0'>
+            {jsonStrings[1].last_buy_price_remove_threshold}{' '}
+            <OverlayTrigger
+              trigger='click'
+              key={'last-buy-remove-threshold-overlay-' + quoteAsset}
+              placement='bottom'
+              overlay={
+                <Popover
+                  id={'last-buy-remove-threshold-overlay-right' + quoteAsset}>
+                  <Popover.Content>
+                    {
+                      jsonStrings[0]
+                        .last_buy_price_remove_threshold_description[1]
+                    }{' '}
+                    "{quoteAsset}".
+                    {
+                      jsonStrings[0]
+                        .last_buy_price_remove_threshold_description[2]
+                    }
+                  </Popover.Content>
+                </Popover>
+              }>
+              <Button variant='link' className='p-0 m-0 ml-1 text-info'>
+                <i className='fas fa-question-circle fa-sm'></i>
+              </Button>
+            </OverlayTrigger>
+          </Form.Label>
+          <InputGroup size='sm'>
+            <FormControl
+              size='sm'
+              type='number'
+              placeholder={
+                jsonStrings[0].placeholder_last_buy_remove_price_threshold
+              }
+              required
+              min='0.0001'
+              step='0.0001'
+              data-state-key={quoteAsset}
+              value={lastBuyPriceRemoveThresholds[quoteAsset]}
+              onChange={this.handleInputChange}
+            />
+            <InputGroup.Append>
+              <InputGroup.Text>{quoteAsset}</InputGroup.Text>
+            </InputGroup.Append>
+          </InputGroup>
+        </Form.Group>
       );
     });
   }

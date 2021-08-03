@@ -19,8 +19,8 @@ class SearchIcon extends React.Component {
       target.type === 'checkbox'
         ? target.checked
         : target.type === 'number'
-          ? +target.value
-          : target.value;
+        ? +target.value
+        : target.value;
 
     let { searchName } = this.state;
 
@@ -34,10 +34,17 @@ class SearchIcon extends React.Component {
 
   render() {
     return (
-      <form class="search-container" onChange={this.handleInputChange}>
-        <input id="search-box" type="text" class="search-box" onkeypress="return event.keyCode != 13;" />
-        <label for="search-box"><span class="fa fa-search search-icon"></span></label>
-        <input type="submit" id="search-submit" />
+      <form class='search-container' onChange={this.handleInputChange}>
+        <input
+          id='search-box'
+          type='text'
+          class='search-box'
+          onkeypress='return event.keyCode != 13;'
+        />
+        <label for='search-box'>
+          <span class='fa fa-search search-icon'></span>
+        </label>
+        <input type='submit' id='search-submit' />
       </form>
     );
   }

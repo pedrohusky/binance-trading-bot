@@ -2,13 +2,34 @@ const moment = require('moment');
 const _ = require('lodash');
 const config = require('config');
 const { isActionDisabled } = require('../../trailingTradeHelper/common');
-const { cache } = require('../../../helpers');
+const { cache, messenger } = require('../../../helpers');
 
 const retrieveLastBuyOrder = async symbol => {
   const cachedLastBuyOrder =
     JSON.parse(await cache.get(`${symbol}-last-buy-order`)) || {};
 
   return _.isEmpty(cachedLastBuyOrder);
+};
+
+/**
+ * Retrieve last grid order from cache
+ *
+ * @param {*} logger
+ * @param {*} symbol
+ * @param {*} side
+ * @returns
+ */
+const getGridTradeLastOrder = async (logger, symbol, side) => {
+  const cachedLastOrder =
+    JSON.parse(await cache.get(`${symbol}-grid-trade-last-${side}-order`)) ||
+    {};
+
+  logger.info(
+    { cachedLastOrder },
+    `Retrieved grid trade last ${side} order from cache`
+  );
+
+  return cachedLastOrder;
 };
 
 /**
@@ -26,9 +47,9 @@ const canBuy = async data => {
     },
     symbolConfiguration: {
       strategyOptions: {
-        tradeOptions: { manyBuys, differenceToBuy },
         huskyOptions: { buySignal }
-      }
+      },
+      buy: { currentGridTrade }
     },
     sell: { lastBuyPrice, lastQtyBought },
     symbol
@@ -36,49 +57,22 @@ const canBuy = async data => {
 
   const canBuyIt = await retrieveLastBuyOrder(symbol);
 
-  let percentDifference = 200;
-
   if (buySignal) {
-    if (manyBuys) {
-      if (lastBuyPrice > 0) {
-        percentDifference =
-          100 *
-          ((lastBuyPrice - buyCurrentPrice) /
-            ((lastBuyPrice + buyCurrentPrice) / 2));
-      }
-      return (
-        canBuyIt &&
-        buyCurrentPrice <= buyTriggerPrice &&
-        signedTrendDiff === 1 &&
-        percentDifference >= differenceToBuy
-      );
-    }
     return (
       canBuyIt &&
       lastBuyPrice <= 0 &&
       lastQtyBought <= 0 &&
       buyCurrentPrice <= buyTriggerPrice &&
-      signedTrendDiff === 1
-    );
-  }
-  if (manyBuys) {
-    if (lastBuyPrice > 0) {
-      percentDifference =
-        100 *
-        ((lastBuyPrice - buyCurrentPrice) /
-          ((lastBuyPrice + buyCurrentPrice) / 2));
-    }
-    return (
-      canBuyIt &&
-      buyCurrentPrice <= buyTriggerPrice &&
-      percentDifference >= differenceToBuy
+      signedTrendDiff === 1 &&
+      currentGridTrade !== null
     );
   }
   return (
     canBuyIt &&
     lastBuyPrice <= 0 &&
     lastQtyBought <= 0 &&
-    buyCurrentPrice <= buyTriggerPrice
+    buyCurrentPrice <= buyTriggerPrice &&
+    currentGridTrade !== null
   );
 };
 
@@ -91,6 +85,7 @@ const canBuy = async data => {
 const isGreaterThanTheATHRestrictionPrice = data => {
   const {
     symbolConfiguration: {
+      currentGridTradeIndex,
       strategyOptions: {
         athRestriction: { enabled: buyATHRestrictionEnabled }
       }
@@ -102,6 +97,7 @@ const isGreaterThanTheATHRestrictionPrice = data => {
   } = data;
 
   return (
+    currentGridTradeIndex === 0 &&
     buyATHRestrictionEnabled === true &&
     buyTriggerPrice >= buyATHRestrictionPrice
   );
@@ -118,11 +114,17 @@ const hasBalanceToSell = data => {
     symbolInfo: {
       filterMinNotional: { minNotional }
     },
+    symbolConfiguration: {
+      buy: { currentGridTradeIndex: currentBuyGridTradeIndex }
+    },
     buy: { currentPrice: buyCurrentPrice },
     sell: { lastQtyBought }
   } = data;
 
-  return lastQtyBought * buyCurrentPrice >= parseFloat(minNotional);
+  return (
+    currentBuyGridTradeIndex === 0 &&
+    lastQtyBought * buyCurrentPrice >= parseFloat(minNotional)
+  );
 };
 
 /**
@@ -152,19 +154,20 @@ const meanPredictedValueIsTrue = async data => {
   } = data;
 
   const isGreaterThanATH =
-    buyATHRestrictionEnabled === true && currentPrice >= buyATHRestrictionPrice;
-
+    buyATHRestrictionEnabled && currentPrice >= buyATHRestrictionPrice;
   const cachedLastBuyOrder =
     JSON.parse(await cache.get(`${symbol}-last-buy-order`)) || {};
 
   // Make sure we don't have a last buy, open orders, and it is not greater than ath.
+
   if (
     !predictValue ||
+    prediction === undefined ||
+    prediction.meanPredictedValue[0] === undefined ||
     lastBuyPrice > 0 ||
     lastQtyBought > 0 ||
     !_.isEmpty(openOrders) ||
     isGreaterThanATH ||
-    prediction.meanPredictedValue === undefined ||
     !_.isEmpty(cachedLastBuyOrder)
   ) {
     return false;
@@ -217,7 +220,8 @@ const canSell = data => {
       filterMinNotional: { minNotional }
     },
     symbolConfiguration: {
-      buy: { lastBuyPriceRemoveThreshold }
+      buy: { lastBuyPriceRemoveThreshold },
+      sell: { currentGridTrade }
     },
     sell: { currentPrice: sellCurrentPrice, lastBuyPrice, lastQtyBought },
     baseAssetBalance: { total: baseAssetTotalBalance }
@@ -227,7 +231,8 @@ const canSell = data => {
     lastBuyPrice > 0 &&
     lastQtyBought * sellCurrentPrice > parseFloat(minNotional) &&
     lastQtyBought * sellCurrentPrice > lastBuyPriceRemoveThreshold &&
-    baseAssetTotalBalance * sellCurrentPrice > parseFloat(minNotional)
+    baseAssetTotalBalance * sellCurrentPrice > parseFloat(minNotional) &&
+    currentGridTrade !== null
   );
 };
 
@@ -312,6 +317,7 @@ const isLowerThanStopLossTriggerPrice = data => {
   if (
     predictValue &&
     predictStopLoss &&
+    prediction !== undefined &&
     prediction.meanPredictedValue !== undefined
   ) {
     const predictionDiff =
@@ -363,10 +369,14 @@ const execute = async (logger, rawData) => {
     symbol,
     isLocked,
     symbolConfiguration: {
-      sell: { trendDownMarketSell },
+      sell: {
+        trendDownMarketSell,
+        currentGridTradeIndex: currentSellGridTradeIndex
+      },
       strategyOptions: {
         tradeOptions: { manyBuys }
-      }
+      },
+      buy: { currentGridTradeIndex: currentBuyGridTradeIndex }
     }
   } = data;
 
@@ -425,6 +435,17 @@ const execute = async (logger, rawData) => {
     }
   }
   if (await canBuy(data)) {
+    if (
+      _.isEmpty(await getGridTradeLastOrder(logger, symbol, 'buy')) === false
+    ) {
+      return setBuyActionAndMessage(
+        logger,
+        data,
+        'buy-order-wait',
+        `There is a last grid trade buy order. Wait.`
+      );
+    }
+
     // ATH verify
     if (isGreaterThanTheATHRestrictionPrice(data)) {
       return setBuyActionAndMessage(
@@ -435,29 +456,6 @@ const execute = async (logger, rawData) => {
       );
     }
 
-    if (manyBuys) {
-      const checkDisable = await isActionDisabled(symbol);
-      logger.info(
-        { tag: 'check-disable', checkDisable },
-        'Checked whether symbol is disabled or not.'
-      );
-      if (checkDisable.isDisabled) {
-        return setBuyActionAndMessage(
-          logger,
-          data,
-          'buy-temporary-disabled',
-          `${
-            _actions.action_buy_disabled[1] +
-            _actions.action_sell_disabled[2] +
-            checkDisable.disabledBy
-          }.${_actions.action_sell_disabled[3]}${checkDisable.ttl}s`
-        );
-      }
-
-      logger.info('Buying again!.');
-
-      return setBuyActionAndMessage(logger, data, 'buy', _actions.action_buy);
-    }
     if (!hasBalanceToSell(data)) {
       const checkDisable = await isActionDisabled(symbol);
       logger.info(
@@ -485,6 +483,17 @@ const execute = async (logger, rawData) => {
   //  last buy price has a value
   //  and total balance is enough to sell
   if (canSell(data)) {
+    if (
+      _.isEmpty(await getGridTradeLastOrder(logger, symbol, 'sell')) === false
+    ) {
+      return setSellActionAndMessage(
+        logger,
+        data,
+        'sell-order-wait',
+        `There is a last gird trade sell order. Wait.`
+      );
+    }
+
     // And its above the HARD sell trigger.
     if (isHigherThanHardSellTriggerPrice(data)) {
       const checkDisable = await isActionDisabled(symbol);

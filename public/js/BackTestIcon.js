@@ -11,7 +11,6 @@ class BackTestIcon extends React.Component {
       symbolConfiguration: {}
     };
 
-
     this.handleModalShow = this.handleModalShow.bind(this);
     this.handleModalClose = this.handleModalClose.bind(this);
     this.handleFormSubmit = this.handleFormSubmit.bind(this);
@@ -53,8 +52,8 @@ class BackTestIcon extends React.Component {
       target.type === 'checkbox'
         ? target.checked
         : target.type === 'number'
-          ? +target.value
-          : target.value;
+        ? +target.value
+        : target.value;
     const stateKey = target.getAttribute('data-state-key');
 
     const { symbolConfiguration } = this.state;
@@ -62,33 +61,34 @@ class BackTestIcon extends React.Component {
     this.setState({
       symbolConfiguration: _.set(symbolConfiguration, stateKey, value)
     });
-
   }
 
   handleFormSubmit() {
-
-
     const { symbolInfo } = this.props;
     const newSymbolInfo = symbolInfo;
     newSymbolInfo.configuration = this.state.symbolConfiguration;
 
     this.props.sendWebSocket('symbol-backtest', newSymbolInfo);
     //   this.handleModalClose();
-
-
   }
 
   render() {
     const { showModal, symbolConfiguration } = this.state;
     const { symbolInfo, jsonStrings } = this.props;
 
-    if (_.isEmpty(symbolInfo) || _.isEmpty(symbolConfiguration) || _.isEmpty(jsonStrings)) {
+    if (
+      _.isEmpty(symbolInfo) ||
+      _.isEmpty(symbolConfiguration) ||
+      _.isEmpty(jsonStrings)
+    ) {
       return '';
-    };
+    }
 
-    const { symbolConfiguration: { backtest: { result } } } = this.state;
-
-    const { setting_icon, common_strings } = jsonStrings;
+    const {
+      symbolConfiguration: {
+        backtest: { result }
+      }
+    } = this.state;
 
     return '';
     return (
@@ -98,17 +98,19 @@ class BackTestIcon extends React.Component {
             type='button'
             className='btn btn-sm btn-backtest mr-1'
             onClick={() => this.handleModalShow()}>
-            <i className='fa fa-shopping-bag'></i> Backtest
+            <i className='fas fa-shopping-bag'></i> Backtest
           </button>
         </div>
-        <Modal show={showModal} onHide={() => this.handleModalClose()} backdrop='static' size='xl'>
+        <Modal
+          show={showModal}
+          onHide={() => this.handleModalClose()}
+          backdrop='static'
+          size='xl'>
           <Modal.Header closeButton className='pt-1 pb-1'>
             <Modal.Title>Backtest</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <p className='d-block text-muted mb-2'>
-              UNDER CONSTRUCTION
-            </p>
+            <p className='d-block text-muted mb-2'>UNDER CONSTRUCTION</p>
 
             <Form.Group
               controlId='field-backtest-days-to-test'
@@ -121,22 +123,18 @@ class BackTestIcon extends React.Component {
                   placement='bottom'
                   overlay={
                     <Popover id='backtest-days-to-test-overlay-right'>
-                      <Popover.Content>
-                        UNDER CONSTRUCTION
-                      </Popover.Content>
+                      <Popover.Content>UNDER CONSTRUCTION</Popover.Content>
                     </Popover>
                   }>
-                  <Button
-                    variant='link'
-                    className='p-0 m-0 ml-1 text-info'>
-                    <i className='fa fa-question-circle'></i>
+                  <Button variant='link' className='p-0 m-0 ml-1 text-info'>
+                    <i className='fas fa-question-circle fa-sm'></i>
                   </Button>
                 </OverlayTrigger>
               </Form.Label>
               <Form.Control
                 size='sm'
                 type='number'
-                placeholder="Number of days to test"
+                placeholder='Number of days to test'
                 required
                 min='0'
                 step='0.0001'
@@ -157,22 +155,18 @@ class BackTestIcon extends React.Component {
                   placement='bottom'
                   overlay={
                     <Popover id='backtest-money-to-test-overlay-right'>
-                      <Popover.Content>
-                        UNDER CONSTRUCTION
-                      </Popover.Content>
+                      <Popover.Content>UNDER CONSTRUCTION</Popover.Content>
                     </Popover>
                   }>
-                  <Button
-                    variant='link'
-                    className='p-0 m-0 ml-1 text-info'>
-                    <i className='fa fa-question-circle'></i>
+                  <Button variant='link' className='p-0 m-0 ml-1 text-info'>
+                    <i className='fas fa-question-circle fa-sm'></i>
                   </Button>
                 </OverlayTrigger>
               </Form.Label>
               <Form.Control
                 size='sm'
                 type='number'
-                placeholder="Number of money to test"
+                placeholder='Number of money to test'
                 required
                 min='0'
                 step='0.0001'
@@ -205,7 +199,7 @@ class BackTestIcon extends React.Component {
                           controlId='field-candles-interval'
                           className='mb-2'>
                           <Form.Label className='mb-0'>
-                            {common_strings._interval}
+                            {jsonStrings._interval}
                             <OverlayTrigger
                               trigger='click'
                               key='interval-overlay'
@@ -220,7 +214,7 @@ class BackTestIcon extends React.Component {
                               <Button
                                 variant='link'
                                 className='p-0 m-0 ml-1 text-info'>
-                                <i className='fa fa-question-circle'></i>
+                                <i className='fas fa-question-circle fa-sm'></i>
                               </Button>
                             </OverlayTrigger>
                           </Form.Label>
@@ -248,7 +242,7 @@ class BackTestIcon extends React.Component {
                           controlId='field-candles-limit'
                           className='mb-2'>
                           <Form.Label className='mb-0'>
-                            {common_strings._limit}{' '}
+                            {jsonStrings._limit}{' '}
                             <OverlayTrigger
                               trigger='click'
                               key='limit-overlay'
@@ -263,14 +257,16 @@ class BackTestIcon extends React.Component {
                               <Button
                                 variant='link'
                                 className='p-0 m-0 ml-1 text-info'>
-                                <i className='fa fa-question-circle'></i>
+                                <i className='fas fa-question-circle fa-sm'></i>
                               </Button>
                             </OverlayTrigger>
                           </Form.Label>
                           <Form.Control
                             size='sm'
                             type='number'
-                            placeholder={setting_icon.placeholder_enter_limit_price}
+                            placeholder={
+                              setting_icon.placeholder_enter_limit_price
+                            }
                             required
                             min='0'
                             step='1'
@@ -301,7 +297,7 @@ class BackTestIcon extends React.Component {
                   <Card.Body className='px-2 py-1'>
                     <div className='row'>
                       <div className='col-xs-12 col-sm-6'>
-                        <p className='form-header mb-1'>{common_strings._buy}</p>
+                        <p className='form-header mb-1'>{jsonStrings._buy}</p>
                         <Form.Group
                           controlId='field-buy-enabled'
                           className='mb-2'>
@@ -313,7 +309,7 @@ class BackTestIcon extends React.Component {
                               onChange={this.handleInputChange}
                             />
                             <Form.Check.Label>
-                              {common_strings.trading_enabled}{' '}
+                              {jsonStrings.trading_enabled}{' '}
                               <OverlayTrigger
                                 trigger='click'
                                 key='buy-enabled-overlay'
@@ -328,7 +324,7 @@ class BackTestIcon extends React.Component {
                                 <Button
                                   variant='link'
                                   className='p-0 m-0 ml-1 text-info'>
-                                  <i className='fa fa-question-circle'></i>
+                                  <i className='fas fa-question-circle fa-sm'></i>
                                 </Button>
                               </OverlayTrigger>
                             </Form.Check.Label>
@@ -347,26 +343,33 @@ class BackTestIcon extends React.Component {
                               overlay={
                                 <Popover id='last-buy-remove-threshold-overlay-right'>
                                   <Popover.Content>
-                                    {setting_icon.last_buy_price_remove_threshold_description}
+                                    {
+                                      setting_icon.last_buy_price_remove_threshold_description
+                                    }
                                   </Popover.Content>
                                 </Popover>
                               }>
                               <Button
                                 variant='link'
                                 className='p-0 m-0 ml-1 text-info'>
-                                <i className='fa fa-question-circle'></i>
+                                <i className='fas fa-question-circle fa-sm'></i>
                               </Button>
                             </OverlayTrigger>
                           </Form.Label>
                           <Form.Control
                             size='sm'
                             type='number'
-                            placeholder={setting_icon.placeholder_last_buy_price_remove_threshold}
+                            placeholder={
+                              setting_icon.placeholder_last_buy_price_remove_threshold
+                            }
                             required
                             min='0.0001'
                             step='0.0001'
                             data-state-key='buy.lastBuyPriceRemoveThreshold'
-                            value={symbolConfiguration.buy.lastBuyPriceRemoveThreshold}
+                            value={
+                              symbolConfiguration.buy
+                                .lastBuyPriceRemoveThreshold
+                            }
                             onChange={this.handleInputChange}
                           />
                         </Form.Group>
@@ -383,21 +386,25 @@ class BackTestIcon extends React.Component {
                               overlay={
                                 <Popover id='buy-maximum-purchase-amount-overlay-right'>
                                   <Popover.Content>
-                                    {setting_icon.max_purchase_amount_symbol_description}
+                                    {
+                                      setting_icon.max_purchase_amount_symbol_description
+                                    }
                                   </Popover.Content>
                                 </Popover>
                               }>
                               <Button
                                 variant='link'
                                 className='p-0 m-0 ml-1 text-info'>
-                                <i className='fa fa-question-circle'></i>
+                                <i className='fas fa-question-circle fa-sm'></i>
                               </Button>
                             </OverlayTrigger>
                           </Form.Label>
                           <Form.Control
                             size='sm'
                             type='number'
-                            placeholder={setting_icon.placeholder_max_purchase_amount}
+                            placeholder={
+                              setting_icon.placeholder_max_purchase_amount
+                            }
                             required
                             min='0'
                             step='0.0001'
@@ -418,21 +425,25 @@ class BackTestIcon extends React.Component {
                               overlay={
                                 <Popover id='buy-trigger-percentage-overlay-right'>
                                   <Popover.Content>
-                                    {setting_icon.trigger_percent_buy_description}
+                                    {
+                                      setting_icon.trigger_percent_buy_description
+                                    }
                                   </Popover.Content>
                                 </Popover>
                               }>
                               <Button
                                 variant='link'
                                 className='p-0 m-0 ml-1 text-info'>
-                                <i className='fa fa-question-circle'></i>
+                                <i className='fas fa-question-circle fa-sm'></i>
                               </Button>
                             </OverlayTrigger>
                           </Form.Label>
                           <Form.Control
                             size='sm'
                             type='number'
-                            placeholder={setting_icon.placeholder_trigger_percent}
+                            placeholder={
+                              setting_icon.placeholder_trigger_percent
+                            }
                             required
                             min='0'
                             step='0.0001'
@@ -445,7 +456,7 @@ class BackTestIcon extends React.Component {
                           controlId='field-buy-stop-percentage'
                           className='mb-2'>
                           <Form.Label className='mb-0'>
-                            {common_strings.stop_price_percent}{' '}
+                            {jsonStrings.stop_price_percent}{' '}
                             <OverlayTrigger
                               trigger='click'
                               key='buy-stop-price-percentage-overlay'
@@ -453,21 +464,25 @@ class BackTestIcon extends React.Component {
                               overlay={
                                 <Popover id='buy-stop-price-percentage-overlay-right'>
                                   <Popover.Content>
-                                    {setting_icon.stop_price_percent_description}
+                                    {
+                                      setting_icon.stop_price_percent_description
+                                    }
                                   </Popover.Content>
                                 </Popover>
                               }>
                               <Button
                                 variant='link'
                                 className='p-0 m-0 ml-1 text-info'>
-                                <i className='fa fa-question-circle'></i>
+                                <i className='fas fa-question-circle fa-sm'></i>
                               </Button>
                             </OverlayTrigger>
                           </Form.Label>
                           <Form.Control
                             size='sm'
                             type='number'
-                            placeholder={setting_icon.placeholder_enter_stop_price}
+                            placeholder={
+                              setting_icon.placeholder_enter_stop_price
+                            }
                             required
                             min='0'
                             step='0.0001'
@@ -481,7 +496,7 @@ class BackTestIcon extends React.Component {
                           controlId='field-buy-limit-percentage'
                           className='mb-2'>
                           <Form.Label className='mb-0'>
-                            {common_strings.limit_price_percent}{' '}
+                            {jsonStrings.limit_price_percent}{' '}
                             <OverlayTrigger
                               trigger='click'
                               key='interval-overlay'
@@ -489,21 +504,25 @@ class BackTestIcon extends React.Component {
                               overlay={
                                 <Popover id='interval-overlay-right'>
                                   <Popover.Content>
-                                    {setting_icon.limit_price_percent_description}
+                                    {
+                                      setting_icon.limit_price_percent_description
+                                    }
                                   </Popover.Content>
                                 </Popover>
                               }>
                               <Button
                                 variant='link'
                                 className='p-0 m-0 ml-1 text-info'>
-                                <i className='fa fa-question-circle'></i>
+                                <i className='fas fa-question-circle fa-sm'></i>
                               </Button>
                             </OverlayTrigger>
                           </Form.Label>
                           <Form.Control
                             size='sm'
                             type='number'
-                            placeholder={setting_icon.placeholder_enter_limit_price}
+                            placeholder={
+                              setting_icon.placeholder_enter_limit_price
+                            }
                             required
                             min='0'
                             step='0.0001'
@@ -514,7 +533,7 @@ class BackTestIcon extends React.Component {
                         </Form.Group>
                       </div>
                       <div className='col-xs-12 col-sm-6'>
-                        <p className='form-header mb-1'>{common_strings._sell}</p>
+                        <p className='form-header mb-1'>{jsonStrings._sell}</p>
                         <Form.Group
                           controlId='field-sell-enabled'
                           className='mb-2'>
@@ -526,7 +545,7 @@ class BackTestIcon extends React.Component {
                               onChange={this.handleInputChange}
                             />
                             <Form.Check.Label>
-                              {common_strings.trading_enabled}{' '}
+                              {jsonStrings.trading_enabled}{' '}
                               <OverlayTrigger
                                 trigger='click'
                                 key='buy-enabled-overlay'
@@ -541,7 +560,7 @@ class BackTestIcon extends React.Component {
                                 <Button
                                   variant='link'
                                   className='p-0 m-0 ml-1 text-info'>
-                                  <i className='fa fa-question-circle'></i>
+                                  <i className='fas fa-question-circle fa-sm'></i>
                                 </Button>
                               </OverlayTrigger>
                             </Form.Check.Label>
@@ -559,21 +578,25 @@ class BackTestIcon extends React.Component {
                               overlay={
                                 <Popover id='sell-trigger-percentage-overlay-right'>
                                   <Popover.Content>
-                                    {setting_icon.trigger_percent_sell_description}
+                                    {
+                                      setting_icon.trigger_percent_sell_description
+                                    }
                                   </Popover.Content>
                                 </Popover>
                               }>
                               <Button
                                 variant='link'
                                 className='p-0 m-0 ml-1 text-info'>
-                                <i className='fa fa-question-circle'></i>
+                                <i className='fas fa-question-circle fa-sm'></i>
                               </Button>
                             </OverlayTrigger>
                           </Form.Label>
                           <Form.Control
                             size='sm'
                             type='number'
-                            placeholder={setting_icon.placeholder_trigger_percent}
+                            placeholder={
+                              setting_icon.placeholder_trigger_percent
+                            }
                             required
                             min='0'
                             step='0.0001'
@@ -586,7 +609,7 @@ class BackTestIcon extends React.Component {
                           controlId='field-sell-stop-percentage'
                           className='mb-2'>
                           <Form.Label className='mb-0'>
-                            {common_strings.stop_price_percent}{' '}
+                            {jsonStrings.stop_price_percent}{' '}
                             <OverlayTrigger
                               trigger='click'
                               key='sell-stop-price-percentage-overlay'
@@ -594,21 +617,25 @@ class BackTestIcon extends React.Component {
                               overlay={
                                 <Popover id='sell-stop-price-percentage-overlay-right'>
                                   <Popover.Content>
-                                    {setting_icon.stop_price_percent_description_sell}
+                                    {
+                                      setting_icon.stop_price_percent_description_sell
+                                    }
                                   </Popover.Content>
                                 </Popover>
                               }>
                               <Button
                                 variant='link'
                                 className='p-0 m-0 ml-1 text-info'>
-                                <i className='fa fa-question-circle'></i>
+                                <i className='fas fa-question-circle fa-sm'></i>
                               </Button>
                             </OverlayTrigger>
                           </Form.Label>
                           <Form.Control
                             size='sm'
                             type='number'
-                            placeholder={setting_icon.placeholder_enter_stop_price}
+                            placeholder={
+                              setting_icon.placeholder_enter_stop_price
+                            }
                             required
                             min='0'
                             step='0.0001'
@@ -621,7 +648,7 @@ class BackTestIcon extends React.Component {
                           controlId='field-sell-limit-percentage'
                           className='mb-2'>
                           <Form.Label className='mb-0'>
-                            {common_strings.limit_price_percent}{' '}
+                            {jsonStrings.limit_price_percent}{' '}
                             <OverlayTrigger
                               trigger='click'
                               key='sell-limit-price-percentage-overlay'
@@ -629,21 +656,25 @@ class BackTestIcon extends React.Component {
                               overlay={
                                 <Popover id='sell-limit-price-percentage-overlay-right'>
                                   <Popover.Content>
-                                    {setting_icon.limit_price_percent_description_sell}
+                                    {
+                                      setting_icon.limit_price_percent_description_sell
+                                    }
                                   </Popover.Content>
                                 </Popover>
                               }>
                               <Button
                                 variant='link'
                                 className='p-0 m-0 ml-1 text-info'>
-                                <i className='fa fa-question-circle'></i>
+                                <i className='fas fa-question-circle fa-sm'></i>
                               </Button>
                             </OverlayTrigger>
                           </Form.Label>
                           <Form.Control
                             size='sm'
                             type='number'
-                            placeholder={setting_icon.placeholder_enter_limit_price}
+                            placeholder={
+                              setting_icon.placeholder_enter_limit_price
+                            }
                             required
                             min='0'
                             step='0.0001'
@@ -652,7 +683,9 @@ class BackTestIcon extends React.Component {
                             onChange={this.handleInputChange}
                           />
                         </Form.Group>
-                        <p className='form-header mb-1'>{common_strings._sell} - {common_strings.stop_loss}</p>
+                        <p className='form-header mb-1'>
+                          {jsonStrings._sell} - {jsonStrings.stop_loss}
+                        </p>
                         <Form.Group
                           controlId='field-sell-stop-loss-enabled'
                           className='mb-2'>
@@ -666,7 +699,7 @@ class BackTestIcon extends React.Component {
                               onChange={this.handleInputChange}
                             />
                             <Form.Check.Label>
-                              {common_strings.stop_loss_enabled}{' '}
+                              {jsonStrings.stop_loss_enabled}{' '}
                               <OverlayTrigger
                                 trigger='click'
                                 key='sell-stop-loss-enabled-overlay'
@@ -674,14 +707,16 @@ class BackTestIcon extends React.Component {
                                 overlay={
                                   <Popover id='sell-stop-loss-enabled-overlay-right'>
                                     <Popover.Content>
-                                      {setting_icon.stop_loss_enabled_description}
+                                      {
+                                        setting_icon.stop_loss_enabled_description
+                                      }
                                     </Popover.Content>
                                   </Popover>
                                 }>
                                 <Button
                                   variant='link'
                                   className='p-0 m-0 ml-1 text-info'>
-                                  <i className='fa fa-question-circle'></i>
+                                  <i className='fas fa-question-circle fa-sm'></i>
                                 </Button>
                               </OverlayTrigger>
                             </Form.Check.Label>
@@ -691,7 +726,7 @@ class BackTestIcon extends React.Component {
                           controlId='field-sell-stop-loss-max-loss-percentage'
                           className='mb-2'>
                           <Form.Label className='mb-0'>
-                            {common_strings.max_loss_percent}{' '}
+                            {jsonStrings.max_loss_percent}{' '}
                             <OverlayTrigger
                               trigger='click'
                               key='sell-stop-loss-max-loss-percentage-overlay'
@@ -706,14 +741,16 @@ class BackTestIcon extends React.Component {
                               <Button
                                 variant='link'
                                 className='p-0 m-0 ml-1 text-info'>
-                                <i className='fa fa-question-circle'></i>
+                                <i className='fas fa-question-circle fa-sm'></i>
                               </Button>
                             </OverlayTrigger>
                           </Form.Label>
                           <Form.Control
                             size='sm'
                             type='number'
-                            placeholder={setting_icon.placeholder_enter_max_loss}
+                            placeholder={
+                              setting_icon.placeholder_enter_max_loss
+                            }
                             required
                             max='1'
                             min='0'
@@ -738,21 +775,25 @@ class BackTestIcon extends React.Component {
                               overlay={
                                 <Popover id='sell-stop-loss-disable-buy-minutes-overlay-right'>
                                   <Popover.Content>
-                                    {setting_icon.temporary_disable_buy_description}
+                                    {
+                                      setting_icon.temporary_disable_buy_description
+                                    }
                                   </Popover.Content>
                                 </Popover>
                               }>
                               <Button
                                 variant='link'
                                 className='p-0 m-0 ml-1 text-info'>
-                                <i className='fa fa-question-circle'></i>
+                                <i className='fas fa-question-circle fa-sm'></i>
                               </Button>
                             </OverlayTrigger>
                           </Form.Label>
                           <Form.Control
                             size='sm'
                             type='number'
-                            placeholder={setting_icon.placeholder_enter_max_loss}
+                            placeholder={
+                              setting_icon.placeholder_enter_max_loss
+                            }
                             required
                             max='99999999'
                             min='1'
@@ -771,7 +812,6 @@ class BackTestIcon extends React.Component {
                 </Accordion.Collapse>
               </Card>
             </Accordion>
-
           </Modal.Body>
           <Modal.Footer>
             <Button
@@ -780,7 +820,11 @@ class BackTestIcon extends React.Component {
               onClick={this.handleModalClose}>
               Close
             </Button>
-            <Button type='submit' variant='primary' size='sm' onClick={this.handleFormSubmit}>
+            <Button
+              type='submit'
+              variant='primary'
+              size='sm'
+              onClick={this.handleFormSubmit}>
               Start BackTest
             </Button>
           </Modal.Footer>

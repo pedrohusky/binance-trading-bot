@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const tf = require('@tensorflow/tfjs');
-const { binance, cache, messenger } = require('../../../helpers');
+const { binance, cache } = require('../../../helpers');
 
 /**
  * Flatten candle data
@@ -84,7 +84,7 @@ const predictCoinValue = async symbol => {
     predictedValues: [],
     meanPredictedValue: [],
     realCandles: [],
-    date: new Date()
+    date: ''
   };
 
   const cachedPrediction =

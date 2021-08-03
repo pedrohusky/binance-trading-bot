@@ -3,21 +3,19 @@
 /* eslint-disable no-undef */
 class AccountWrapper extends React.Component {
   render() {
-    const { accountInfo, dustTransfer, sendWebSocket, jsonStrings } = this.props;
+    const { accountInfo, dustTransfer, sendWebSocket, jsonStrings } =
+      this.props;
 
     if (_.isEmpty(jsonStrings)) {
       return '';
     }
-
-    const { common_strings } = jsonStrings;
 
     const assets = accountInfo.balances.map((balance, index) => {
       return (
         <AccountWrapperAsset
           key={`account-wrapper-` + index}
           balance={balance}
-          jsonStrings={jsonStrings}>
-        </AccountWrapperAsset>
+          jsonStrings={jsonStrings}></AccountWrapperAsset>
       );
     });
 
@@ -32,7 +30,7 @@ class AccountWrapper extends React.Component {
               <button
                 type='button'
                 className='btn btn-sm btn-link btn-account-balance text-uppercase font-weight-bold'>
-                {common_strings.account_balance}
+                {jsonStrings[0].account_balance}
               </button>
             </Accordion.Toggle>
             <Accordion.Collapse eventKey='0'>

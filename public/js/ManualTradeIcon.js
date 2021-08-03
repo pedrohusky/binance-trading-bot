@@ -85,7 +85,7 @@ class ManualTradeIcon extends React.Component {
 
           if (
             buySymbols[quoteAssetBalance.asset].baseAssets[
-            baseAssetBalance.asset
+              baseAssetBalance.asset
             ] === undefined
           ) {
             buySymbols[quoteAssetBalance.asset].baseAssets[
@@ -113,7 +113,7 @@ class ManualTradeIcon extends React.Component {
 
           if (
             sellSymbols[quoteAssetBalance.asset].baseAssets[
-            baseAssetBalance.asset
+              baseAssetBalance.asset
             ] === undefined
           ) {
             sellSymbols[quoteAssetBalance.asset].baseAssets[
@@ -344,10 +344,10 @@ class ManualTradeIcon extends React.Component {
       target.type === 'button'
         ? target.getAttribute('data-state-value')
         : target.type === 'checkbox'
-          ? target.checked
-          : target.type === 'number'
-            ? +target.value
-            : target.value;
+        ? target.checked
+        : target.type === 'number'
+        ? +target.value
+        : target.value;
     const stateKey = target.getAttribute('data-state-key');
 
     const { orders } = this.state;
@@ -377,7 +377,6 @@ class ManualTradeIcon extends React.Component {
     if (_.isEmpty(jsonStrings)) {
       return '';
     }
-    const { common_strings, manual_trade } = jsonStrings;
 
     return (
       <div className='coin-info-manual-trade-wrapper'>
@@ -386,7 +385,7 @@ class ManualTradeIcon extends React.Component {
             type='button'
             className='btn btn-sm btn-manual-trade mr-1'
             onClick={() => this.handleModalShow()}>
-            <i className='fa fa-shopping-bag'></i> {manual_trade.trade_all}
+            <i className='fas fa-shopping-bag'></i> {jsonStrings[2].trade_all}
           </button>
         </div>
         <Modal
@@ -395,22 +394,22 @@ class ManualTradeIcon extends React.Component {
           backdrop='static'
           size='xl'>
           <Modal.Header closeButton className='pt-1 pb-1'>
-            <Modal.Title>{manual_trade.manual_trade_for_all}</Modal.Title>
+            <Modal.Title>{jsonStrings[2].manual_trade_for_all}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <p className='d-block text-muted mb-2'>
-              {manual_trade._description[1]}
+              {jsonStrings[2]._description[1]}
               <br />
               <br />
-              {manual_trade._description[2]}
+              {jsonStrings[2]._description[2]}
               <br />
               <br />
-              {manual_trade._description[3]}
+              {jsonStrings[2]._description[3]}
               {orders.side === 'sell' ? (
                 <React.Fragment>
                   <br />
                   <br />
-                  {manual_trade._description[4]}
+                  {jsonStrings[2]._description[4]}
                 </React.Fragment>
               ) : (
                 ''
@@ -424,7 +423,7 @@ class ManualTradeIcon extends React.Component {
                   data-state-key='side'
                   data-state-value='buy'
                   onClick={e => this.handleInputChange(e)}>
-                  {common_strings._buy}
+                  {jsonStrings[1]._buy}
                 </Button>
                 <Button
                   variant={orders.side === 'sell' ? 'primary' : 'secondary'}
@@ -432,7 +431,7 @@ class ManualTradeIcon extends React.Component {
                   data-state-key='side'
                   data-state-value='sell'
                   onClick={e => this.handleInputChange(e)}>
-                  {common_strings._sell}
+                  {jsonStrings[1]._sell}
                 </Button>
               </ButtonGroup>
             </div>
@@ -445,7 +444,7 @@ class ManualTradeIcon extends React.Component {
                         variant='primary'
                         className='w-100'
                         disabled={true}>
-                        {common_strings._market}
+                        {jsonStrings[1]._market}
                       </Button>
                     </ButtonGroup>
                   </div>
@@ -453,18 +452,20 @@ class ManualTradeIcon extends React.Component {
                   <div className='manual-trade-row manual-trade-price-wrapper mt-2'>
                     <Form.Group controlId='field-buy-price' className='mb-2'>
                       <Form.Label htmlFor='field-buy-price-input' srOnly>
-                        {common_strings._price}
+                        {jsonStrings[1]._price}
                       </Form.Label>
                       <InputGroup size='sm'>
                         <InputGroup.Prepend>
-                          <InputGroup.Text>{common_strings._price}</InputGroup.Text>
+                          <InputGroup.Text>
+                            {jsonStrings[1]._price}
+                          </InputGroup.Text>
                         </InputGroup.Prepend>
 
                         <FormControl
                           id='field-buy-price-input'
                           type='text'
                           className='text-right'
-                          value={common_strings._market}
+                          value={jsonStrings[1]._market}
                         />
                       </InputGroup>
                     </Form.Group>
@@ -475,7 +476,7 @@ class ManualTradeIcon extends React.Component {
                         variant='primary'
                         className='w-100'
                         disabled={true}>
-                        {common_strings._total}
+                        {jsonStrings[1]._total}
                       </Button>
                     </ButtonGroup>
                   </div>
@@ -503,7 +504,7 @@ class ManualTradeIcon extends React.Component {
                             </div>
                             <div className='manual-trade-row d-flex flex-row justify-content-between mt-1 mb-1'>
                               <div className='manual-trade-label'>
-                                {common_strings.current_balance}
+                                {jsonStrings[1].current_balance}
                               </div>
                               <span className='manual-trade-quote-asset'>
                                 {parseFloat(quoteAssetBalance.free).toFixed(
@@ -670,7 +671,7 @@ class ManualTradeIcon extends React.Component {
                             </div>
                             <div className='manual-trade-row d-flex flex-row justify-content-between mt-1 mb-1'>
                               <div className='manual-trade-label'>
-                                {common_strings.remaining_balance}
+                                {jsonStrings[1].remaining_balance}
                               </div>
                               <span className='manual-trade-quote-asset'>
                                 {parseFloat(remainingQuoteAssetBalance).toFixed(
@@ -693,7 +694,7 @@ class ManualTradeIcon extends React.Component {
                           this.handleInputChange(e);
                           this.handleFormSubmit(e);
                         }}>
-                        {common_strings._buy}
+                        {jsonStrings[1]._buy}
                       </button>
                     </div>
                   </div>
@@ -710,7 +711,7 @@ class ManualTradeIcon extends React.Component {
                         variant='primary'
                         className='w-100'
                         disabled={true}>
-                        {common_strings._market}
+                        {jsonStrings[1]._market}
                       </Button>
                     </ButtonGroup>
                   </div>
@@ -718,17 +719,19 @@ class ManualTradeIcon extends React.Component {
                   <div className='manual-trade-row manual-trade-price-wrapper mt-2'>
                     <Form.Group controlId='field-sell-price' className='mb-2'>
                       <Form.Label htmlFor='field-sell-price-input' srOnly>
-                        {common_strings._price}
+                        {jsonStrings[1]._price}
                       </Form.Label>
                       <InputGroup size='sm'>
                         <InputGroup.Prepend>
-                          <InputGroup.Text>{common_strings._price}</InputGroup.Text>
+                          <InputGroup.Text>
+                            {jsonStrings[1]._price}
+                          </InputGroup.Text>
                         </InputGroup.Prepend>
                         <FormControl
                           id='field-sell-price-input'
                           type='text'
                           className='text-right'
-                          value={common_strings._market}
+                          value={jsonStrings[1]._market}
                         />
                       </InputGroup>
                     </Form.Group>
@@ -740,7 +743,7 @@ class ManualTradeIcon extends React.Component {
                         variant='primary'
                         className='w-100'
                         disabled={true}>
-                        {common_strings._quantity}
+                        {jsonStrings[1]._quantity}
                       </Button>
                     </ButtonGroup>
                   </div>
@@ -781,7 +784,7 @@ class ManualTradeIcon extends React.Component {
                                     <div className='manual-trade-row manual-trade-row-base-asset'>
                                       <div className='manual-trade-row d-flex flex-row justify-content-between mt-1 mb-1'>
                                         <div className='manual-trade-label'>
-                                          {common_strings.remaining_balance}
+                                          {jsonStrings[1].remaining_balance}
                                         </div>
                                         <span className='manual-trade-quote-asset'>
                                           {parseFloat(remainingBalance).toFixed(
@@ -945,7 +948,7 @@ class ManualTradeIcon extends React.Component {
                         this.handleInputChange(e);
                         this.handleFormSubmit(e);
                       }}>
-                      {common_strings._sell}
+                      {jsonStrings[1]._sell}
                     </button>
                   </div>
                 </div>

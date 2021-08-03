@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+- Filter symbols in the frontend. Thanks [@pedrohusky](https://github.com/pedrohusky) - [#120](https://github.com/chrisleekr/binance-trading-bot/issues/120) [#242](https://github.com/chrisleekr/binance-trading-bot/pull/242)
+
+## [0.0.73] - 2021-07-29
+
+- Make the local tunnel to be disabled by default. Thanks [@pedrohusky](https://github.com/pedrohusky)
+- Support Grid strategy for buy/sell to mitigate loss/increasing profit - [#158](https://github.com/chrisleekr/binance-trading-bot/issues/158)
+- Add frontend option to disable sorting or improve sorting - [#244](https://github.com/chrisleekr/binance-trading-bot/issues/244)
+
+## [0.0.72] - 2021-07-07
+
+- Support ATH buy restriction by [@habibalkhabbaz](https://github.com/habibalkhabbaz) - [#82](https://github.com/chrisleekr/binance-trading-bot/issues/82)
+- Support last buy price removing threshold by [@pedrohusky](https://github.com/pedrohusky) - [#190](https://github.com/chrisleekr/binance-trading-bot/issues/190)
+
 ## [0.0.71] - 2021-06-14
 
 - Fixed the issue with dust transfer

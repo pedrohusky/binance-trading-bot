@@ -39,7 +39,7 @@ class App extends React.Component {
           type: 'info',
           background: '#2f96b4',
           icon: {
-            className: 'fa fa-info-circle fa-lg',
+            className: 'fas fa-info-circle fa-lg',
             tagName: 'i',
             text: '',
             color: 'white'
@@ -49,7 +49,7 @@ class App extends React.Component {
           type: 'warning',
           background: '#fd7e14',
           icon: {
-            className: 'fa fa-exclamation-circle fa-lg',
+            className: 'fas fa-exclamation-circle fa-lg',
             tagName: 'i',
             text: '',
             color: 'white'
@@ -176,7 +176,8 @@ class App extends React.Component {
           apiInfo: response.common.apiInfo,
           passwordActivated: response.common.passwordActivated,
           login: response.common.login,
-          pastTrades: response.common.pastTrades
+          pastTrades: response.common.pastTrades,
+          language: response.common.language
         });
       }
 
@@ -246,17 +247,12 @@ class App extends React.Component {
       login,
       passwordActivated,
       searchKeyword,
-      pastTrades
+      pastTrades,
+      language: languageData
     } = this.state;
 
-    if (configuration.botOptions != undefined) {
-      if (languageReady != configuration.botOptions.language) {
-        languageReady = configuration.botOptions.language;
-
-        fetch(configuration.botOptions.language + '.json')
-          .then(res => res.json())
-          .then(data => (languageData = data));
-      }
+    if (configuration.botOptions !== undefined) {
+      console.log(this.state);
 
       if (login === {} || (passwordActivated && !login.logged)) {
         return (
@@ -271,9 +267,10 @@ class App extends React.Component {
       }
 
       if (login.logged) {
-        if (languageData != undefined) {
-          const coinWrappers = symbols.map((symbol, index) => {
-            if (searchKeyword != '') {
+        if (languageData !== undefined) {
+          let coinWrappers = [];
+          coinWrappers = symbols.map((symbol, index) => {
+            if (searchKeyword !== '') {
               if (symbol.symbol.includes(searchKeyword)) {
                 return (
                   <CoinWrapper
@@ -284,7 +281,16 @@ class App extends React.Component {
                     symbolInfo={symbol}
                     configuration={configuration}
                     sendWebSocket={this.sendWebSocket}
-                    jsonStrings={languageData}
+                    jsonStrings={[
+                      languageData.coin_wrapper,
+                      languageData.common_strings,
+                      languageData.symbol_delete,
+                      languageData.symbol_enable_action,
+                      languageData.symbol_edit_last_buy_price,
+                      languageData.setting_icon,
+                      languageData.symbol_enable_action,
+                      languageData.symbol_manual_trade
+                    ]}
                   />
                 );
               }
@@ -298,7 +304,16 @@ class App extends React.Component {
                   symbolInfo={symbol}
                   configuration={configuration}
                   sendWebSocket={this.sendWebSocket}
-                  jsonStrings={languageData}
+                  jsonStrings={[
+                    languageData.coin_wrapper,
+                    languageData.common_strings,
+                    languageData.symbol_delete,
+                    languageData.symbol_enable_action,
+                    languageData.symbol_edit_last_buy_price,
+                    languageData.setting_icon,
+                    languageData.symbol_enable_action,
+                    languageData.symbol_manual_trade
+                  ]}
                 />
               );
             }
@@ -311,7 +326,10 @@ class App extends React.Component {
                 publicURL={publicURL}
                 exchangeSymbols={exchangeSymbols}
                 sendWebSocket={this.sendWebSocket}
-                jsonStrings={languageData}
+                jsonStrings={[
+                  languageData.setting_icon,
+                  languageData.common_strings
+                ]}
               />
               {_.isEmpty(configuration) === false ? (
                 <div className='app-body'>
@@ -320,22 +338,33 @@ class App extends React.Component {
                       accountInfo={accountInfo}
                       dustTransfer={dustTransfer}
                       sendWebSocket={this.sendWebSocket}
-                      jsonStrings={languageData}
+                      jsonStrings={[
+                        languageData.common_strings,
+                        languageData.dust_transfer
+                      ]}
                     />
                     <ProfitLossWrapper
                       symbols={symbols}
                       sendWebSocket={this.sendWebSocket}
-                      jsonStrings={languageData}
+                      jsonStrings={[
+                        languageData.profit_loss_wrapper,
+                        languageData.common_strings,
+                        languageData.manual_trade
+                      ]}
                     />
                     <MonitorOptionsWrapper
-                      jsonStrings={languageData}
                       searchKeyword={this.searchKeyword}
                       sortSymbols={this.sortSymbols}
                     />
                   </div>
-                  <div className='coin-wrappers'>{coinWrappers}</div>
+                  <div className='coin-wrappers'>
+                    {!_.isEmpty(coinWrappers) ? coinWrappers : ''}
+                  </div>
                   <div className='app-body-footer-wrapper'>
-                    <Status apiInfo={apiInfo} jsonStrings={languageData} />
+                    <Status
+                      apiInfo={apiInfo}
+                      jsonStrings={languageData.common_strings}
+                    />
                   </div>
                 </div>
               ) : (
@@ -348,14 +377,14 @@ class App extends React.Component {
 
               <PastTradesWrapper
                 pastTrades={[...pastTrades]}
-                jsonStrings={languageData}
+                jsonStrings={languageData.past_trades}
                 sendWebSocket={this.sendWebSocket}
               />
 
               <Footer
                 packageVersion={packageVersion}
                 gitHash={gitHash}
-                jsonStrings={languageData}
+                jsonStrings={languageData._footer}
               />
             </div>
           );
