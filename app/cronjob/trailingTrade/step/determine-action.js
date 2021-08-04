@@ -182,9 +182,9 @@ const meanPredictedValueIsTrue = async data => {
   }
 
   return (
-    predictionDiff >= 0.25 &&
+    predictionDiff >= 0.2 &&
     difference >= 0.1 &&
-    trendDiff >= 0.2 &&
+    trendDiff >= 0.1 &&
     signedTrendDiff === 1
   );
 };
