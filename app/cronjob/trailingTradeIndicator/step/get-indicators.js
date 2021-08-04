@@ -115,16 +115,6 @@ const predictCoinValue = async symbol => {
         candlesToPredict.push(parseFloat(c.close));
       });
 
-      if (prediction.predictedValues.length === 11) {
-        diffWeight.push(
-          100 -
-            (parseFloat(prediction.predictedValues[9]) /
-              parseFloat(bc[bc.length - 1].close)) *
-              100
-        );
-        candlesToPredict.push(parseFloat(prediction.predictedValues[9]));
-      }
-
       // create model object - This creates a layer with one unit and one input shape.
       const model = tf.sequential({
         layers: [tf.layers.dense({ units: 1, inputShape: [1] })]
@@ -152,9 +142,8 @@ const predictCoinValue = async symbol => {
       );
 
       if (prediction.predictedValues !== undefined) {
-        if (prediction.predictedValues.length === 11) {
+        if (prediction.predictedValues.length === 10) {
           prediction.predictedValues.shift();
-          candlesToPredict.pop();
         }
       }
       if (prediction.predictedValues === undefined) {
