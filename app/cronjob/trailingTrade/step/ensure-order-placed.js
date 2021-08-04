@@ -305,8 +305,8 @@ const execute = async (logger, rawData) => {
             'The order could not be found or error occurred querying the order.'
           );
           // If order is no longer available, then delete from cache
-          await removeLastBuyOrder(logger, symbol);
-          messenger.errorMessage(`Removed order by this error: ${e}`);
+          // await removeLastBuyOrder(logger, symbol);
+          // messenger.errorMessage(`Removed order by this error: ${e}`);
         }
 
         if (orderResult !== {}) {
@@ -423,8 +423,8 @@ const execute = async (logger, rawData) => {
             'The order could not be found or error occurred querying the order.'
           );
           // If order is no longer available, then delete from cache
-          await removeLastSellOrder(logger, symbol);
-          messenger.errorMessage(`Removed sell order by this error: ${e}`);
+          //  await removeLastSellOrder(logger, symbol);
+          //  messenger.errorMessage(`Removed sell order by this error: ${e}`);
         }
 
         // If filled, then calculate average cost and quantity and save new last buy price.

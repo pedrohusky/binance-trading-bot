@@ -2,7 +2,7 @@ const moment = require('moment');
 const _ = require('lodash');
 const config = require('config');
 const { isActionDisabled } = require('../../trailingTradeHelper/common');
-const { cache, messenger } = require('../../../helpers');
+const { cache } = require('../../../helpers');
 
 const retrieveLastBuyOrder = async symbol => {
   const cachedLastBuyOrder =
@@ -182,9 +182,9 @@ const meanPredictedValueIsTrue = async data => {
   }
 
   return (
-    predictionDiff >= 0.25 &&
+    predictionDiff >= 0.2 &&
     difference >= 0.1 &&
-    trendDiff >= 0.2 &&
+    trendDiff >= 0.1 &&
     signedTrendDiff === 1
   );
 };

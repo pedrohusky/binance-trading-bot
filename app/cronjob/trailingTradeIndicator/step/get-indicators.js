@@ -80,7 +80,7 @@ const predictCoinValue = async symbol => {
   const diffWeight = [];
 
   let prediction = {
-    interval: '30m',
+    interval: '3m',
     predictedValues: [],
     meanPredictedValue: [],
     realCandles: [],
@@ -163,9 +163,8 @@ const predictCoinValue = async symbol => {
 
       prediction.predictedValues.push(predictionCoinValue);
 
-
       const newPrediction = {
-        interval: '30m',
+        interval: '3m',
         predictedValues: prediction.predictedValues,
         meanPredictedValue: [_.mean(prediction.predictedValues)],
         realCandles: candlesToPredict,
