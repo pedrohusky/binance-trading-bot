@@ -182,9 +182,9 @@ const meanPredictedValueIsTrue = async data => {
   }
 
   return (
-    predictionDiff >= 0.2 &&
+    predictionDiff >= 0.25 &&
     difference >= 0.1 &&
-    trendDiff >= 0.1 &&
+    trendDiff >= 0.2 &&
     signedTrendDiff === 1
   );
 };
@@ -372,9 +372,6 @@ const execute = async (logger, rawData) => {
       sell: {
         trendDownMarketSell,
         currentGridTradeIndex: currentSellGridTradeIndex
-      },
-      strategyOptions: {
-        tradeOptions: { manyBuys }
       },
       buy: { currentGridTradeIndex: currentBuyGridTradeIndex }
     }
