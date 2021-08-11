@@ -299,6 +299,7 @@ Or use the frontend to adjust configurations after launching the application.
    | BINANCE_SLACK_USERNAME         | Slack username                                                            | Chris                                                                                               |
    | BINANCE_LOCAL_TUNNEL_ENABLED   | Enable/Disable [local tunnel](https://github.com/localtunnel/localtunnel) | true                                                                                                |
    | BINANCE_LOCAL_TUNNEL_SUBDOMAIN | Local tunnel public URL subdomain                                         | binance                                                                                             |
+   | LOG_LEVEL                      | Log level for Bunyan - trace (default), debug, info, warn, error, fatal   | trace                                                                                               |
 
    *A local tunnel makes the bot accessible from the outside. Please set the subdomain of the local tunnel as a subdomain that only you can remember.*
 
