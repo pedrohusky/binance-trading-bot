@@ -9,8 +9,10 @@ I give *no warranty and accepts no responsibility or liability for the accuracy 
 
 The donated funds *will be used for testing the bot or buying gifts for my love, toys for my dogs and cats and coffee for me.*
 
+NOTE: Binance Gift Card and Binance Pay do not have fees.
+
 | Cryptocurrencies                                              | Network                   | Address                                                                                           |
 | ------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------- |
 | ![Binance Pay](https://img.shields.io/badge/Donate-BINANCE_PAY-cyan) | Binance | `Binance Pay address: 124741538`                                                      |
-| ![Binance Gift Card](https://img.shields.io/badge/Donate-BINANCE_GIFT_CARD-green) | Binance | `You can send any amount, even as low as 1$ without any fees, this is the best option. To send a gif card to me, please contact me at discord: pedrohusky#9119`                                                      |                                               |
+| ![Binance Gift Card](https://img.shields.io/badge/Donate-BINANCE_GIFT_CARD-green) | Binance | `You can send any amount, even as low as 1$ without any fees. To send a gif card to me, please contact me at discord: pedrohusky#9119`                                                      |                                               |
 | ![Donate BTC](https://img.shields.io/badge/Donate-BTC-yellow) | Binance Smart Chain (BSC) | `0xb0254633b6761925946fe38b85b821553245a787` |

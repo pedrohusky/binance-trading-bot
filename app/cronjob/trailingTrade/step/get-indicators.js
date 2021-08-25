@@ -82,7 +82,6 @@ const execute = async (logger, rawData) => {
   const lastBuyPriceDoc = await getLastBuyPrice(logger, symbol);
   const lastQuantityBought = _.get(lastBuyPriceDoc, 'quantity', null);
   const lastBuyPrice = _.get(lastBuyPriceDoc, 'lastBuyPrice', null);
-  const lastBoughtPrice = _.get(lastBuyPriceDoc, 'lastBoughtPrice', null);
 
   const precision = parseFloat(tickSize) === 1 ? 0 : tickSize.indexOf(1) - 1;
 
@@ -239,7 +238,6 @@ const execute = async (logger, rawData) => {
     gridStrategyActivated: manyBuys,
     lastBuyPrice,
     lastQtyBought: lastQuantityBought,
-    lastBoughtPrice,
     triggerPrice: sellTriggerPrice,
     hardTriggerPrice: sellHardTriggerPrice,
     difference: sellDifference,

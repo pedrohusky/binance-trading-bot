@@ -1,5 +1,5 @@
 # development stage
-FROM node:14-alpine AS dev-stage
+FROM node:16-alpine AS dev-stage
 
 RUN apk add --no-cache make gcc g++ python
 
@@ -58,6 +58,8 @@ LABEL com.chrisleekr.binance-trading-bot.node-env=${NODE_ENV}
 
 # Add configuration files
 COPY image-files/ /
+
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 WORKDIR /srv
 

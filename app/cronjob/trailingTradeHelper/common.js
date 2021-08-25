@@ -94,7 +94,7 @@ const getLastBuyPrice = async (logger, symbol) =>
 const saveLastBuyPrice = async (
   logger,
   symbol,
-  { lastBuyPrice, quantity, lastBoughtPrice = 0 }
+  { lastBuyPrice, quantity }
 ) => {
   logger.info(
     { tag: 'save-last-buy-price', symbol, lastBuyPrice, quantity },
@@ -107,8 +107,7 @@ const saveLastBuyPrice = async (
     {
       key: `${symbol}-last-buy-price`,
       lastBuyPrice,
-      quantity,
-      lastBoughtPrice
+      quantity
     }
   );
 };

@@ -69,8 +69,7 @@ const calculateLastBuyPrice = async (logger, symbol, order) => {
   }
   await saveLastBuyPrice(logger, symbol, {
     lastBuyPrice: newLastBuyPrice,
-    quantity: newQuantity,
-    lastBoughtPrice: parseFloat(orderPrice)
+    quantity: newQuantity
   });
 
   PubSub.publish('frontend-notification', {
@@ -371,7 +370,7 @@ const execute = async (logger, rawData) => {
           data,
           'buy-order-checking',
           'The buy order seems placed; however, it does not appear in the open orders. ' +
-            'Wait for the buy order to appear in open orders.'
+          'Wait for the buy order to appear in open orders.'
         );
       }
       lastBuyCheck = new Date();
@@ -483,7 +482,7 @@ const execute = async (logger, rawData) => {
           data,
           'sell-order-checking',
           'The sell order seems placed; however, it does not appear in the open orders. ' +
-            'Wait for the sell order to appear in open orders.'
+          'Wait for the sell order to appear in open orders.'
         );
       }
       lastSellCheck = new Date();
